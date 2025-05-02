@@ -22,6 +22,16 @@ VirtuManager/
 - `model.py`            # Contains methods to create VM and virtual disks
 - `view.py`             # GUI implementation with tkinter
 
+## 📐 Design Pattern: MVC
+
+This project follows the **Model-View-Controller (MVC)** design pattern:
+
+- **Model**: This contains the application's core logic, such as creating virtual machines (VMs) and virtual disks. It handles data and communicates with the system.
+  
+- **View**: The graphical user interface (GUI) built with **Tkinter** that interacts with the user. It presents data and allows users to input parameters for creating VMs, virtual disks, and Docker images.
+
+- **Controller**: Acts as an intermediary between the **Model** and **View**. It processes user input from the **View**, interacts with the **Model** to perform operations, and updates the **View** accordingly.
+
 ## ⚙️ How to Run
 1. Install dependencies:
    ```bash
