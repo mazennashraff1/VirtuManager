@@ -17,10 +17,11 @@ This project is the first phase of a broader virtualization and container manage
 - **shutil** and **os** for file system operations
 
 ## 📂 Project Structure
-.
-├── controller.py # Main logic for system checks and operations
-├── model.py # Contains methods to create VM and virtual disks
-├── view.py # GUI implementation with tkinter
+VirtuManager/
+│
+├── controller.py       # Main logic for system checks and operations
+├── model.py            # Contains methods to create VM and virtual disks
+├── view.py             # GUI implementation with tkinter
 
 ## ⚙️ How to Run
 1. Install dependencies:
