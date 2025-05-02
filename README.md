@@ -1,6 +1,6 @@
 # VirtuManager
 
-**VirtuManager** is a Python-based graphical application designed to help users easily create and manage virtual disks and virtual machines. The tool provides system validation checks for CPU, RAM, and disk space before creating a virtual machine, ensuring optimal configuration.
+**VirtuManager** is a Python-based graphical application designed to help users easily create and manage virtual disks and virtual machines. The tool provides system validation checks for CPU, RAM, and disk space before making a virtual machine, ensuring optimal configuration.
 
 This project is the first phase of a broader virtualization and container management tool.
 
@@ -31,7 +31,7 @@ This project is the first phase of a broader virtualization and container manage
 - This project currently supports creating virtual disks and virtual machines only.
 - More features, such as Docker management, will be added in future phases.
 
-##💡 Future Enhancements
+## 💡 Future Enhancements
 Planned features for upcoming phases:
 
 - Dockerfile creation
