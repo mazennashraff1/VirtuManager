@@ -15,18 +15,40 @@ class Controller:
             targetPath
         )
         freeGB = self._freeSpace / (1024**3)  # Convert bytes to GB
-
-        if int(requiredGB) > freeGB:
+        if int(requiredGB) > 0:
+            if int(requiredGB) > freeGB:
+                return (
+                    False,
+                    f"Not enough space: {freeGB:.2f} GB available, but {requiredGB} GB required.",
+                )
+            else:
+                return True, f"Enough space: {freeGB:.2f} GB available."
+        elif int(requiredGB) == 0:
             return (
                 False,
-                f"Not enough space: {freeGB:.2f} GB available, but {requiredGB} GB required.",
+                f"The Space Requrired should be Greater than Zero.",
             )
         else:
-            return True, f"Enough space: {freeGB:.2f} GB available."
+            return (
+                False,
+                f"We Can't have Negative Space required.",
+            )
 
-    def _checkValidPath(self, filePath="", folderPath="", extension=[]):
-        """Check if the specified file or folder exists at the given path."""
+    import os
+
+    def _checkValidPath(self, filePath="", folderPath="", extension=[], create=False):
+        """Check if the specified file or folder exists at the given path and optionally create the file."""
         if filePath != "":
+            if create:
+                if not os.path.isfile(filePath):
+                    # Create the file (if you want to create an empty file)
+                    with open(filePath, 'w') as f:
+                        pass
+                    return "", True
+                else:
+                    return f"File already exists: {filePath}", False
+
+            # Check if file exists and matches extension
             if os.path.isfile(filePath):
                 if extension:
                     fileExt = os.path.splitext(filePath)[1][1:].lower()
@@ -44,6 +66,7 @@ class Controller:
             return "The specified folder does not exist.", False
 
         return "No file or folder path provided.", False
+
 
     def _checkValidRAM(self, requiredRAM):
         """Check if the system has enough available RAM for the VM."""
@@ -100,13 +123,19 @@ class Controller:
             return response
 
     def callVD(self, diskName, diskPath, diskFormat, diskSize):
-        pathMessage, dPath = self._checkValidPath("", diskPath, [])
-        if dPath:
-            dSize, dMessage = self._validateDiskSpace(diskSize, diskPath)
-            if dSize:
-                create_virtual_disk(diskName, diskPath, diskFormat, diskSize)
-                return f"Virtual disk '{diskName}' created successfully at {diskPath}."
+        if diskName != "" and diskFormat != "" and diskSize != "" and diskPath != "":
+            pathMessage, dPath = self._checkValidPath("", diskPath, [diskFormat], True)
+            print(pathMessage)
+            if dPath:
+                dSize, dMessage = self._validateDiskSpace(diskSize, diskPath)
+                if dSize:
+                    create_virtual_disk(diskName, diskPath, diskFormat, diskSize)
+                    return (
+                        f"Virtual disk '{diskName}' created successfully at {diskPath}."
+                    )
+                else:
+                    return dMessage
             else:
-                return dMessage
+                return pathMessage
         else:
-            return pathMessage
+            return "Please Fill out all the information"
