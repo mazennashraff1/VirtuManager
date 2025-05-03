@@ -1,244 +1,226 @@
-import tkinter as tk
-from tkinter import ttk, filedialog
 import webbrowser
+from PIL import Image
+import tkinter as tk
+import customtkinter as ctk
+from tkinter import filedialog
 from controller import Controller
+from customtkinter import CTkImage
+import tkinter.messagebox as messagebox
+
+ctk.set_appearance_mode("light")
+ctk.set_default_color_theme("blue")
 
 
-# ---------------- Virtual Disk Page Class ---------------- #
+# ---------- Sidebar Button (Reusable) ---------- #
+def add_sidebar_button(parent, text, command, disabled=False):
+    state = "disabled" if disabled else "normal"
+    ctk.CTkButton(
+        parent,
+        text=text,
+        command=command,
+        state=state,
+        corner_radius=10,
+        fg_color="#545454",
+        text_color="white",
+        hover_color="#444444",
+        height=40,
+    ).pack(fill="x", pady=6, padx=10)
+
+
+# ---------- Virtual Disk Page ---------- #
 class CreateVirtualDiskPage:
-    def __init__(self):
-        self.window = tk.Tk()
+    def __init__(self, root):
+        self.root = root
+        self.window = ctk.CTkToplevel(fg_color="#545454")
         self.window.title("Create Virtual Disk")
         self.window.geometry("800x500")
 
-        # Sidebar
-        self.sidebar = tk.Frame(self.window, width=150, bg="#0c28b3")
+        self.sidebar = ctk.CTkFrame(self.window, width=160, fg_color="white")
         self.sidebar.pack(side="left", fill="y")
+        add_sidebar_button(self.sidebar, "Home", self.go_home)
+        add_sidebar_button(self.sidebar, "Create Disk", None, disabled=True)
+        add_sidebar_button(self.sidebar, "Create VM", self.go_vm)
 
-        tk.Button(
-            self.sidebar,
-            text="Home",
-            fg="#0c28b3",
-            font=("Arial", 12),
-            relief="flat",
-            command=self.go_home,
-        ).pack(pady=10, fill="x")
-        tk.Button(
-            self.sidebar,
-            text="Create Disk",
-            fg="#0c28b3",
-            font=("Arial", 12, "bold"),
-            relief="flat",
-            state="disabled",
-        ).pack(pady=10, fill="x")
-        tk.Button(
-            self.sidebar,
-            text="Create VM",
-            fg="#0c28b3",
-            font=("Arial", 12),
-            relief="flat",
-            command=self.go_vm,
-        ).pack(pady=10, fill="x")
+        self.main_frame = ctk.CTkFrame(self.window, fg_color="#545454")
+        self.main_frame.pack(side="right", fill="both", expand=True, padx=40, pady=30)
 
-        # Main area
-        self.main_frame = tk.Frame(self.window, bg="white", padx=40)
-        self.main_frame.pack(side="right", fill="both", expand=True, anchor="nw")
-
-        tk.Label(
+        ctk.CTkLabel(
             self.main_frame,
             text="Create Virtual Disk",
-            font=("Arial", 18),
-            fg="#0c28b3",
-            bg="white",
-        ).pack(anchor="w", pady=(20, 10))
+            font=("Segoe UI", 20, "bold"),
+            text_color="white",
+        ).pack(anchor="w", pady=(0, 20))
 
-        # Disk Path
-        tk.Label(self.main_frame, text="Disk Path:", bg="white").pack(anchor="w")
-        path_frame = tk.Frame(self.main_frame, bg="white")
-        path_frame.pack(anchor="w", fill="x", pady=5)
-        self.disk_path = tk.Entry(path_frame, width=50)
-        self.disk_path.pack(side="left")
-        tk.Button(
-            path_frame, text="Browse", command=self.browse_path, relief="flat"
-        ).pack(side="left")
+        self.disk_path = self.add_input("Disk Path", self.browse_path)
+        self.file_name = self.add_input("File Name")
+        self.disk_format = self.add_combobox(
+            "Disk Format", ["qcow2", "vmdk", "vdi", "raw"]
+        )
+        self.disk_size = self.add_input("Disk Size (GB)", default="1")
 
-        # Disk Format
-        tk.Label(self.main_frame, text="Disk Format:", bg="white").pack(
+        self.add_button_row(self.create_disk, self.back, "Create Disk", "Back")
+
+    def add_input(self, label, browse_command=None, default=""):
+        ctk.CTkLabel(self.main_frame, text=label, text_color="white").pack(anchor="w")
+        frame = ctk.CTkFrame(self.main_frame, fg_color="#545454")
+        frame.pack(anchor="w", fill="x", pady=6)
+        entry = ctk.CTkEntry(frame, width=320)
+        entry.insert(0, default)
+        entry.pack(side="left", padx=(0, 10))
+        if browse_command:
+            ctk.CTkButton(
+                frame,
+                text="Browse",
+                command=browse_command,
+                width=80,
+                fg_color="#004aad",
+                hover_color="#444444",
+                text_color="white",
+            ).pack(side="left")
+        return entry
+
+    def add_combobox(self, label, values):
+        ctk.CTkLabel(self.main_frame, text=label, text_color="white").pack(
             anchor="w", pady=(10, 0)
         )
-        self.disk_format = ttk.Combobox(
-            self.main_frame, values=["qcow2", "vmdk", "vdi", "raw"]
-        )
-        self.disk_format.pack(anchor="w", pady=5)
+        cb = ctk.CTkComboBox(self.main_frame, values=values)
+        cb.pack(anchor="w", pady=6)
+        return cb
 
-        # Disk Size
-        tk.Label(self.main_frame, text="Disk Size (GB):", bg="white").pack(
-            anchor="w", pady=(10, 0)
-        )
-        self.disk_size = tk.Spinbox(self.main_frame, from_=1, to=1024)
-        self.disk_size.pack(anchor="w", pady=5)
-
-        # Buttons
-        button_frame = tk.Frame(self.main_frame, bg="white")
-        button_frame.pack(anchor="w", pady=20)
-        tk.Button(button_frame, text="Back", command=self.back, relief="flat").pack(
-            side="left"
-        )
-        tk.Button(
-            button_frame, text="Create Disk", command=self.create_disk, relief="flat"
-        ).pack(side="left")
-
-        self.window.mainloop()
+    def add_button_row(self, confirm_cmd, cancel_cmd, confirm_text, cancel_text):
+        button_frame = ctk.CTkFrame(self.main_frame, fg_color="#545454")
+        button_frame.pack(anchor="center", pady=20)
+        ctk.CTkButton(
+            button_frame,
+            text=confirm_text,
+            command=confirm_cmd,
+            fg_color="red",
+            hover_color="#444444",
+            text_color="white",
+            width=120,
+        ).pack(side="left", padx=10)
+        ctk.CTkButton(
+            button_frame,
+            text=cancel_text,
+            command=cancel_cmd,
+            fg_color="red",
+            hover_color="#444444",
+            text_color="white",
+            width=120,
+        ).pack(side="left", padx=10)
 
     def browse_path(self):
         path = filedialog.askdirectory()
         if path:
-            self.disk_path.delete(0, tk.END)
+            self.disk_path.delete(0, "end")
             self.disk_path.insert(0, path)
 
     def create_disk(self):
-        print("Creating virtual disk...")
-        print("Path:", self.disk_path.get())
-        print("Format:", self.disk_format.get())
-        print("Size:", self.disk_size.get(), "GB")
-
         controller = Controller()
         result = controller.callVD(
-            "mazen",
+            self.file_name.get(),
             self.disk_path.get(),
             self.disk_format.get(),
             self.disk_size.get(),
         )
-        print(result)
+        messagebox.showinfo("Operation Result", result)
 
     def back(self):
         self.window.destroy()
-        HomePage()
+        self.root.deiconify()
 
     def go_home(self):
-        self.window.destroy()
-        HomePage()
+        self.back()
 
     def go_vm(self):
         self.window.destroy()
-        CreateVirtualMachinePage()
+        CreateVirtualMachinePage(self.root)
 
 
-# ---------------- Virtual Machine Page Class ---------------- #
+# ---------- Virtual Machine Page ---------- #
 class CreateVirtualMachinePage:
-    def __init__(self):
-        self.window = tk.Tk()
+    def __init__(self, root):
+        self.root = root
+        self.window = ctk.CTkToplevel(fg_color="#545454")
         self.window.title("Create Virtual Machine")
         self.window.geometry("800x500")
 
-        # Sidebar
-        self.sidebar = tk.Frame(self.window, width=150, bg="#0c28b3")
+        self.sidebar = ctk.CTkFrame(self.window, width=160, fg_color="white")
         self.sidebar.pack(side="left", fill="y")
+        add_sidebar_button(self.sidebar, "Home", self.go_home)
+        add_sidebar_button(self.sidebar, "Create Disk", self.go_vdisk)
+        add_sidebar_button(self.sidebar, "Create VM", None, disabled=True)
 
-        tk.Button(
-            self.sidebar,
-            text="Home",
-            fg="#0c28b3",
-            font=("Arial", 12),
-            relief="flat",
-            command=self.go_home,
-        ).pack(pady=10, fill="x")
-        tk.Button(
-            self.sidebar,
-            text="Create Disk",
-            fg="#0c28b3",
-            font=("Arial", 12),
-            relief="flat",
-            command=self.go_vdisk,
-        ).pack(pady=10, fill="x")
-        tk.Button(
-            self.sidebar,
-            text="Create VM",
-            fg="#0c28b3",
-            font=("Arial", 12, "bold"),
-            relief="flat",
-            state="disabled",
-        ).pack(pady=10, fill="x")
+        self.main_frame = ctk.CTkFrame(self.window, fg_color="#545454")
+        self.main_frame.pack(side="right", fill="both", expand=True, padx=40, pady=30)
 
-        # Main area
-        self.main_frame = tk.Frame(self.window, bg="white", padx=40)
-        self.main_frame.pack(side="right", fill="both", expand=True, anchor="nw")
-
-        tk.Label(
+        ctk.CTkLabel(
             self.main_frame,
             text="Create Virtual Machine",
-            font=("Arial", 18),
-            fg="#0c28b3",
-            bg="white",
-        ).pack(anchor="w", pady=(20, 10))
+            font=("Segoe UI", 20, "bold"),
+            text_color="white",
+        ).pack(anchor="w", pady=(0, 20))
 
-        # Disk Path
-        tk.Label(self.main_frame, text="Disk Path:", bg="white").pack(anchor="w")
-        disk_frame = tk.Frame(self.main_frame, bg="white")
-        disk_frame.pack(anchor="w", fill="x", pady=5)
-        self.disk_path = tk.Entry(disk_frame, width=50)
-        self.disk_path.pack(side="left")
-        tk.Button(
-            disk_frame, text="Browse", command=self.browse_disk_path, relief="flat"
-        ).pack(side="left")
+        self.disk_path = self.add_entry("Disk Path", self.browse_disk_path)
+        self.memory = self.add_entry("Memory (GB)")
+        self.cpus = self.add_entry("CPUs")
+        self.iso_path = self.add_entry("ISO Path", self.browse_iso_path)
 
-        # Memory (GB)
-        tk.Label(self.main_frame, text="Memory (GB):", bg="white").pack(
-            anchor="w", pady=(10, 0)
-        )
-        self.memory = tk.Spinbox(self.main_frame, from_=0, to=999999999999999)
-        self.memory.pack(anchor="w", pady=5)
+        self.add_button_row(self.create_vm, self.back, "Create VM", "Back")
 
-        # CPUs
-        tk.Label(self.main_frame, text="CPUs:", bg="white").pack(
-            anchor="w", pady=(10, 0)
-        )
-        self.cpus = tk.Spinbox(self.main_frame, from_=1, to=16)
-        self.cpus.pack(anchor="w", pady=5)
+    def add_entry(self, label, browse_cmd=None):
+        ctk.CTkLabel(self.main_frame, text=label, text_color="white").pack(anchor="w")
+        frame = ctk.CTkFrame(self.main_frame, fg_color="#545454")
+        frame.pack(anchor="w", fill="x", pady=6)
+        entry = ctk.CTkEntry(frame, width=320)
+        entry.pack(side="left", padx=(0, 10))
+        if browse_cmd:
+            ctk.CTkButton(
+                frame,
+                text="Browse",
+                command=browse_cmd,
+                width=80,
+                fg_color="#004aad",
+                hover_color="#444444",
+                text_color="white",
+            ).pack(side="left")
+        return entry
 
-        # ISO Path
-        tk.Label(self.main_frame, text="ISO Path:", bg="white").pack(
-            anchor="w", pady=(10, 0)
-        )
-        iso_frame = tk.Frame(self.main_frame, bg="white")
-        iso_frame.pack(anchor="w", fill="x", pady=5)
-        self.iso_path = tk.Entry(iso_frame, width=50)
-        self.iso_path.pack(side="left")
-        tk.Button(
-            iso_frame, text="Browse", command=self.browse_iso_path, relief="flat"
-        ).pack(side="left")
-
-        # Buttons
-        button_frame = tk.Frame(self.main_frame, bg="white")
-        button_frame.pack(anchor="w", pady=20)
-        tk.Button(button_frame, text="Back", command=self.back, relief="flat").pack(
-            side="left"
-        )
-        tk.Button(
-            button_frame, text="Create VM", command=self.create_vm, relief="flat"
-        ).pack(side="left")
-
-        self.window.mainloop()
+    def add_button_row(self, confirm_cmd, cancel_cmd, confirm_text, cancel_text):
+        button_frame = ctk.CTkFrame(self.main_frame, fg_color="#545454")
+        button_frame.pack(anchor="center", pady=20)
+        ctk.CTkButton(
+            button_frame,
+            text=confirm_text,
+            command=confirm_cmd,
+            fg_color="red",
+            hover_color="#444444",
+            text_color="white",
+            width=120,
+        ).pack(side="left", padx=10)
+        ctk.CTkButton(
+            button_frame,
+            text=cancel_text,
+            command=cancel_cmd,
+            fg_color="red",
+            hover_color="#444444",
+            text_color="white",
+            width=120,
+        ).pack(side="left", padx=10)
 
     def browse_disk_path(self):
         path = filedialog.askopenfilename(title="Select Virtual Disk File")
         if path:
-            self.disk_path.delete(0, tk.END)
+            self.disk_path.delete(0, "end")
             self.disk_path.insert(0, path)
 
     def browse_iso_path(self):
         path = filedialog.askopenfilename(title="Select ISO File")
         if path:
-            self.iso_path.delete(0, tk.END)
+            self.iso_path.delete(0, "end")
             self.iso_path.insert(0, path)
 
     def create_vm(self):
-        print("Creating virtual machine...")
-        print("Disk Path:", self.disk_path.get())
-        print("Memory:", self.memory.get(), "GB")
-        print("CPUs:", self.cpus.get())
-        print("ISO Path:", self.iso_path.get())
-
         controller = Controller()
         result = controller.callVM(
             self.disk_path.get(),
@@ -246,31 +228,30 @@ class CreateVirtualMachinePage:
             self.cpus.get(),
             self.iso_path.get(),
         )
-        print(result)
+        messagebox.showinfo("Operation Result", result)
 
     def back(self):
         self.window.destroy()
-        HomePage()
+        self.root.deiconify()
 
     def go_home(self):
-        self.window.destroy()
-        HomePage()
+        self.back()
 
     def go_vdisk(self):
         self.window.destroy()
-        CreateVirtualDiskPage()
+        CreateVirtualDiskPage(self.root)
 
 
-# ---------------- Home Page ---------------- #
+# ---------- Home Page ---------- #
 orders_data = [
     (
         "Virtual Disk",
-        "A Virtual Disk is a file or set of files on a physical storage device that emulates a physical disk drive. It is used by virtual machines to store data, operating systems, and applications, functioning like a real hard drive within the virtual environment.",
+        "A Virtual Disk emulates a physical disk drive.",
         "https://www.youtube.com/watch?v=tTBt7_aACPI&t=14s",
     ),
     (
         "Virtual Machine",
-        "A Virtual Machine (VM) is a software-based emulation of a physical computer that runs an operating system and applications in a completely isolated environment. It enables multiple OS instances to operate on a single physical machine, providing flexibility, scalability, and efficient resource utilization.",
+        "A Virtual Machine emulates a full computer system.",
         "https://www.youtube.com/watch?v=mQP0wqNT_DI",
     ),
 ]
@@ -281,118 +262,53 @@ def open_demo(url):
 
 
 def open_vm_window(name, home_root):
-    home_root.destroy()
+    home_root.withdraw()
     if name.lower() == "virtual disk":
-        CreateVirtualDiskPage()
+        page = CreateVirtualDiskPage(home_root)
     elif name.lower() == "virtual machine":
-        CreateVirtualMachinePage()
+        page = CreateVirtualMachinePage(home_root)
+
+    def on_close():
+        page.window.destroy()
+        home_root.deiconify()
+
+    page.window.protocol("WM_DELETE_WINDOW", on_close)
 
 
 def HomePage():
-    root = tk.Tk()
+    root = ctk.CTk()
     root.title("Virtual Machines")
     root.geometry("1000x600")
 
-    header_frame = tk.Frame(root, bg="#0c28b3")
-    header_frame.pack(fill=tk.X)
+    bg_image_pil = Image.open("Virtual Manager.png").resize((1000, 600))
+    root.bg_image = CTkImage(light_image=bg_image_pil, size=(1000, 600))
+    bg_label = ctk.CTkLabel(root, image=root.bg_image, text="")
+    bg_label.place(x=0, y=0, relwidth=1, relheight=1)
 
-    tk.Label(
-        header_frame,
-        text="Virtual Machines",
-        font=("Arial", 24),
-        bg="#0c28b3",
-        fg="white",
-    ).pack(side=tk.LEFT, padx=20)
-    tk.Button(
-        header_frame,
-        text="+ VM",
-        fg="#0c28b3",
-        bg="#0c28b3",
-        font=("Arial", 12),
-        relief="flat",
-        command=lambda: open_vm_window("virtual machine", root),
-    ).pack(side=tk.RIGHT, padx=20)
-    tk.Button(
-        header_frame,
-        text="+ VDisk",
-        fg="#0c28b3",
-        font=("Arial", 12),
-        relief="flat",
-        command=lambda: open_vm_window("virtual disk", root),
-    ).pack(side=tk.RIGHT, padx=10)
+    x_positions = [30, 200, 310, 310]
+    for i, order in enumerate(orders_data):
+        x = 134 + i * 433
+        x2 = 286 + i * 433
+        watch_color = "#fec801" if order[0] == "Virtual Machine" else "#004aad"
 
-    canvas = tk.Canvas(root)
-    scrollbar = tk.Scrollbar(root, orient="vertical", command=canvas.yview)
-    scrollable_frame = tk.Frame(canvas)
-
-    scrollable_frame.bind(
-        "<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
-    )
-    canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
-    canvas.configure(yscrollcommand=scrollbar.set)
-
-    canvas.pack(side="left", fill="both", expand=True)
-    scrollbar.pack(side="right", fill="y")
-
-    tk.Label(
-        scrollable_frame,
-        text="Type",
-        font=("Arial", 10, "bold"),
-        width=20,
-        anchor="w",
-        bg="#e6e6e6",
-    ).grid(row=0, column=0, padx=10, pady=5, sticky="w")
-    tk.Label(
-        scrollable_frame,
-        text="Description",
-        font=("Arial", 10, "bold"),
-        width=60,
-        anchor="w",
-        bg="#e6e6e6",
-    ).grid(row=0, column=1, padx=10, pady=5, sticky="w")
-    tk.Label(
-        scrollable_frame,
-        text="Demo",
-        font=("Arial", 10, "bold"),
-        width=10,
-        anchor="center",
-        bg="#e6e6e6",
-    ).grid(row=0, column=2, padx=10, pady=5)
-    tk.Label(
-        scrollable_frame,
-        text="Start",
-        font=("Arial", 10, "bold"),
-        width=10,
-        anchor="center",
-        bg="#e6e6e6",
-    ).grid(row=0, column=3, padx=10, pady=5)
-
-    for i, order in enumerate(orders_data, start=1):
-        tk.Label(scrollable_frame, text=order[0], width=20, anchor="w").grid(
-            row=i, column=0, padx=10, pady=5, sticky="w"
-        )
-        tk.Label(
-            scrollable_frame,
-            text=order[1],
-            width=60,
-            anchor="w",
-            justify="left",
-            wraplength=500,
-        ).grid(row=i, column=1, padx=10, pady=5, sticky="w")
-        tk.Button(
-            scrollable_frame,
+        ctk.CTkButton(
+            root,
             text="Watch",
             command=lambda url=order[2]: open_demo(url),
-            relief="flat",
-        ).grid(row=i, column=2, padx=10, pady=5)
+            fg_color=watch_color,
+            hover_color="#e76f51",
+            text_color="white",
+        ).place(x=x2, y=x_positions[2])
 
         start_label = "Start VD" if order[0].lower() == "virtual disk" else "Start VM"
-        tk.Button(
-            scrollable_frame,
+        ctk.CTkButton(
+            root,
             text=start_label,
             command=lambda name=order[0]: open_vm_window(name, root),
-            relief="flat",
-        ).grid(row=i, column=3, padx=10, pady=5)
+            fg_color="#ff3131",
+            hover_color="#21867a",
+            text_color="white",
+        ).place(x=x, y=x_positions[3])
 
     root.mainloop()
 

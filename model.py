@@ -1,18 +1,20 @@
+import os
 import subprocess
 
 
-def create_virtual_disk(disk_name, disk_format, disk_size):
+def create_virtual_disk(disk_name, disk_path, disk_format, disk_size):
+    full_path = os.path.join(disk_path, f"{disk_name}.{disk_format}")
     cmd = [
         "qemu-img",
         "create",
         "-f",
         disk_format,
-        f"{disk_name}.{disk_format}",
+        full_path,
         disk_size,
     ]
     try:
         subprocess.run(cmd, check=True)
-        print(f"Disk {disk_name} created successfully.")
+        print(f"Disk {full_path} created successfully.")
     except subprocess.CalledProcessError as e:
         print("Error creating disk:", e)
 
