@@ -147,13 +147,13 @@ class Controller:
                 return "Creating VM Successfully"
             # Otherwise accumulate error messages
             if not disk:
-                response += ext + "\n"
+                response += "Disk Path: " + ext + "\n"
             if ram != True:
-                response += ram + "\n"  # ram contains the error message
+                response += "RAM:" + ram + "\n"  # ram contains the error message
             if cpu != True:
-                response += cpu + "\n"  # cpu contains the error message
+                response += "CPU:" + cpu + "\n"  # cpu contains the error message
             if not iso:
-                response += cext + "\n"
+                response += "ISO Path:" + cext + "\n"
             return response.strip()
         else:
             return "Please Fill out all the information"
