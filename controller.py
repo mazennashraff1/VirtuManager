@@ -36,10 +36,15 @@ class Controller:
 
     def _checkValidPath(self, filePath="", folderPath="", extension=[], create=False):
         """Check if the specified file or folder exists at the given path and optionally create the file."""
-        if filePath != "":
+        print("----------------------------------------------")
+        print(filePath)
+        print("----------------------------------------------")
+        if folderPath != "":
             if create:
+                print(os.path.isfile(filePath))
                 if os.path.isfile(filePath):
                     # Check if a file with the same extension already exists
+                    print(filePath)
                     fileExt = os.path.splitext(filePath)[1][1:].lower()
                     for ext in extension:
                         if fileExt == ext.lower() and os.path.isfile(filePath):
@@ -145,8 +150,8 @@ class Controller:
         if diskName != "" and diskFormat != "" and diskSize != "" and diskPath != "":
             if diskFormat not in formats:
                 return f"Virtual disk Format selected '{diskFormat}'. Expected one of: {', '.join(formats)}."
-            pathMessage, dPath = self._checkValidPath("", diskPath, [diskFormat], True)
-            print(pathMessage)
+            print(f"{diskPath}/{diskName}.{diskFormat}")
+            pathMessage, dPath = self._checkValidPath(f"{diskPath}/{diskName}.{diskFormat}", diskPath, [diskFormat], True)
             if dPath:
                 dSize, dMessage = self._validateDiskSpace(diskSize, diskPath)
                 if dSize:
