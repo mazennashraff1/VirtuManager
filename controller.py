@@ -36,9 +36,6 @@ class Controller:
 
     def _checkValidPath(self, filePath="", folderPath="", extension=[], create=False):
         """Check if the specified file or folder exists at the given path and optionally create the file."""
-        print("----------------------------------------------")
-        print(filePath)
-        print("----------------------------------------------")
         if folderPath != "":
             if create:
                 print(os.path.isfile(filePath))
@@ -69,6 +66,18 @@ class Controller:
                     False,
                 )
 
+        if filePath != "":
+            # Check if file exists and matches extension
+            if os.path.isfile(filePath):
+                if extension:
+                    fileExt = os.path.splitext(filePath)[1][1:].lower()
+                    if fileExt in [ext.lower() for ext in extension]:
+                        return "", True
+                return (
+                    f"Invalid file extension. Expected one of: {', '.join(extension)}.",
+                    False,
+                )
+
         # Check if folderPath is provided
         if folderPath != "":
             if os.path.isdir(folderPath):
@@ -80,56 +89,74 @@ class Controller:
     def _checkValidRAM(self, requiredRAM):
         """Check if the system has enough available RAM for the VM."""
         ram = self._freeRAM.total / (1024**3)  # Convert to GB
-        if int(requiredRAM) <= ram:
-            return True
-        return False
+        requiredRAM = int(requiredRAM)
+
+        if requiredRAM < 0:
+            return f"Invalid RAM size requested (negative value). Available RAM: {ram:.2f} GB, Requested: {requiredRAM} GB."
+        elif requiredRAM == 0:
+            return f"Invalid RAM size requested (zero value). Available RAM: {ram:.2f} GB, Requested: {requiredRAM} GB."
+        elif requiredRAM > ram:
+            return f"Insufficient RAM. Available: {ram:.2f} GB, Required: {requiredRAM} GB."
+
+        return True
 
     def _checkValidCPU(self, requiredCPU):
         """Check if the system has enough CPU cores for the VM."""
-        if int(requiredCPU) <= self._numberOfCores:
-            return True
-        return False
+        requiredCPU = int(requiredCPU)
+
+        if requiredCPU < 0:
+            return f"Invalid CPU cores requested (negative value). Available cores: {self._numberOfCores}, Requested: {requiredCPU}."
+        elif requiredCPU == 0:
+            return f"Invalid CPU cores requested (zero value). Available cores: {self._numberOfCores}, Requested: {requiredCPU}."
+        elif requiredCPU > self._numberOfCores:
+            return f"Insufficient CPU cores. Available: {self._numberOfCores}, Required: {requiredCPU}."
+
+        return True
 
     def callVM(self, diskPath, requiredRAM, requiredCPU, isoPath):
         """Create a virtual machine if all system requirements (disk, RAM, CPU, ISO file) are met."""
         response = ""
-        ext, disk = self._checkValidPath(
-            diskPath,
-            "",
-            [
-                "qcow2",
-                "vmdk",
-                "vdi",
-                "raw",
-                "vhd",
-                "vhdx",
-                "vbox",
-                "hdd",
-                "img",
-                "dmg",
-                "qed",
-                "vzdisk",
-                "zfs",
-            ],
-        )
-        ram = self._checkValidRAM(requiredRAM)
-        cpu = self._checkValidCPU(requiredCPU)
-        iso = self._checkValidPath(isoPath, "", ["iso", "img"])[
-            1
-        ]  # Validate ISO path, we only care about the boolean result
-        if disk and ram and cpu and iso:
-            create_virtual_machine(diskPath, requiredRAM, requiredCPU, isoPath)
-            return "Creating VM Successfully"
-        else:
+        if diskPath != "" and requiredRAM != "" and requiredCPU != "" and isoPath != "":
+            ext, disk = self._checkValidPath(
+                diskPath,
+                "",
+                [
+                    "qcow2",
+                    "vmdk",
+                    "vdi",
+                    "raw",
+                    "vhd",
+                    "vhdx",
+                    "vbox",
+                    "hdd",
+                    "img",
+                    "dmg",
+                    "qed",
+                    "vzdisk",
+                    "zfs",
+                ],
+            )
+            # Validate RAM and CPU
+            ram = self._checkValidRAM(requiredRAM)
+            cpu = self._checkValidCPU(requiredCPU)
+            # Validate ISO path (only care if valid or not)
+            cext, iso = self._checkValidPath(isoPath, "", ["iso", "img"])
+            # If all checks pass
+            if disk and ram == True and cpu == True and iso:
+                create_virtual_machine(diskPath, requiredRAM, requiredCPU, isoPath)
+                return "Creating VM Successfully"
+            # Otherwise accumulate error messages
             if not disk:
                 response += ext + "\n"
-            if not ram:
-                response += f"Insufficient RAM. Available RAM: {self._freeRAM.total / (1024**3):.2f} GB, Required: {requiredRAM} GB.\n"
-            if not cpu:
-                response += f"Insufficient CPU cores. Available cores: {self._numberOfCores}, Required: {requiredCPU} cores.\n"
+            if ram != True:
+                response += ram + "\n"  # ram contains the error message
+            if cpu != True:
+                response += cpu + "\n"  # cpu contains the error message
             if not iso:
-                response += "The ISO path is invalid or the ISO file is not found. \n"
-            return response
+                response += cext + "\n"
+            return response.strip()
+        else:
+            return "Please Fill out all the information"
 
     def callVD(self, diskName, diskPath, diskFormat, diskSize):
         formats = [
@@ -151,7 +178,9 @@ class Controller:
             if diskFormat not in formats:
                 return f"Virtual disk Format selected '{diskFormat}'. Expected one of: {', '.join(formats)}."
             print(f"{diskPath}/{diskName}.{diskFormat}")
-            pathMessage, dPath = self._checkValidPath(f"{diskPath}/{diskName}.{diskFormat}", diskPath, [diskFormat], True)
+            pathMessage, dPath = self._checkValidPath(
+                f"{diskPath}/{diskName}.{diskFormat}", diskPath, [diskFormat], True
+            )
             if dPath:
                 dSize, dMessage = self._validateDiskSpace(diskSize, diskPath)
                 if dSize:
