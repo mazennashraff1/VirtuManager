@@ -26,12 +26,12 @@ class Controller:
         elif int(requiredGB) == 0:
             return (
                 False,
-                f"The Space Requrired should be Greater than Zero.",
+                f"Invalid Space cores requested (zero value).",
             )
         else:
             return (
                 False,
-                f"We Can't have Negative Space required.",
+                f"Invalid Space requested (negative value).",
             )
 
     def _checkValidPath(self, filePath="", folderPath="", extension=[], create=False):
@@ -92,9 +92,9 @@ class Controller:
         requiredRAM = int(requiredRAM)
 
         if requiredRAM < 0:
-            return f"Invalid RAM size requested (negative value). Available RAM: {ram:.2f} GB, Requested: {requiredRAM} GB."
+            return f"Invalid RAM size requested (negative value)."
         elif requiredRAM == 0:
-            return f"Invalid RAM size requested (zero value). Available RAM: {ram:.2f} GB, Requested: {requiredRAM} GB."
+            return f"Invalid RAM size requested (zero value)."
         elif requiredRAM > ram:
             return f"Insufficient RAM. Available: {ram:.2f} GB, Required: {requiredRAM} GB."
 
@@ -105,9 +105,9 @@ class Controller:
         requiredCPU = int(requiredCPU)
 
         if requiredCPU < 0:
-            return f"Invalid CPU cores requested (negative value). Available cores: {self._numberOfCores}, Requested: {requiredCPU}."
+            return f"Invalid CPU cores requested (negative value)."
         elif requiredCPU == 0:
-            return f"Invalid CPU cores requested (zero value). Available cores: {self._numberOfCores}, Requested: {requiredCPU}."
+            return f"Invalid CPU cores requested (zero value)."
         elif requiredCPU > self._numberOfCores:
             return f"Insufficient CPU cores. Available: {self._numberOfCores}, Required: {requiredCPU}."
 
