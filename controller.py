@@ -149,11 +149,11 @@ class Controller:
             if not disk:
                 response += "Disk Path: " + ext + "\n"
             if ram != True:
-                response += "RAM:" + ram + "\n"  # ram contains the error message
+                response += "RAM: " + ram + "\n"  # ram contains the error message
             if cpu != True:
-                response += "CPU:" + cpu + "\n"  # cpu contains the error message
+                response += "CPU: " + cpu + "\n"  # cpu contains the error message
             if not iso:
-                response += "ISO Path:" + cext + "\n"
+                response += "ISO Path: " + cext + "\n"
             return response.strip()
         else:
             return "Please Fill out all the information"
