@@ -34,19 +34,24 @@ class Controller:
                 f"We Can't have Negative Space required.",
             )
 
-    import os
-
     def _checkValidPath(self, filePath="", folderPath="", extension=[], create=False):
         """Check if the specified file or folder exists at the given path and optionally create the file."""
         if filePath != "":
             if create:
-                if not os.path.isfile(filePath):
-                    # Create the file (if you want to create an empty file)
-                    with open(filePath, 'w') as f:
-                        pass
-                    return "", True
-                else:
-                    return f"File already exists: {filePath}", False
+                if os.path.isfile(filePath):
+                    # Check if a file with the same extension already exists
+                    fileExt = os.path.splitext(filePath)[1][1:].lower()
+                    for ext in extension:
+                        if fileExt == ext.lower() and os.path.isfile(filePath):
+                            return (
+                                f"You are attempting to create a file already exists.",
+                                False,
+                            )
+
+                # Create the file (if you want to create an empty file)
+                with open(filePath, "w") as f:
+                    pass
+                return "", True
 
             # Check if file exists and matches extension
             if os.path.isfile(filePath):
@@ -66,7 +71,6 @@ class Controller:
             return "The specified folder does not exist.", False
 
         return "No file or folder path provided.", False
-
 
     def _checkValidRAM(self, requiredRAM):
         """Check if the system has enough available RAM for the VM."""
@@ -123,7 +127,24 @@ class Controller:
             return response
 
     def callVD(self, diskName, diskPath, diskFormat, diskSize):
+        formats = [
+            "qcow2",
+            "vmdk",
+            "vdi",
+            "raw",
+            "vhd",
+            "vhdx",
+            "vbox",
+            "hdd",
+            "img",
+            "dmg",
+            "qed",
+            "vzdisk",
+            "zfs",
+        ]
         if diskName != "" and diskFormat != "" and diskSize != "" and diskPath != "":
+            if diskFormat not in formats:
+                return f"Virtual disk Format selected '{diskFormat}'. Expected one of: {', '.join(formats)}."
             pathMessage, dPath = self._checkValidPath("", diskPath, [diskFormat], True)
             print(pathMessage)
             if dPath:

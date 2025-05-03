@@ -54,7 +54,22 @@ class CreateVirtualDiskPage:
         self.disk_path = self.add_input("Disk Path", self.browse_path)
         self.file_name = self.add_input("File Name")
         self.disk_format = self.add_combobox(
-            "Disk Format", ["qcow2", "vmdk", "vdi", "raw"]
+            "Disk Format",
+            [
+                "qcow2",
+                "vmdk",
+                "vdi",
+                "raw",
+                "vhd",
+                "vhdx",
+                "vbox",
+                "hdd",
+                "img",
+                "dmg",
+                "qed",
+                "vzdisk",
+                "zfs",
+            ],
         )
         self.disk_size = self.add_input("Disk Size (GB)", default="1")
 
