@@ -5,7 +5,7 @@ import subprocess
 def create_virtual_disk(disk_name, disk_path, disk_format, disk_size):
     full_path = os.path.join(disk_path, f"{disk_name}.{disk_format}")
     cmd = [
-        "qemu-img",
+        r"C:/msys64/ucrt64/bin/qemu-img.exe",
         "create",
         "-f",
         disk_format,
@@ -21,7 +21,7 @@ def create_virtual_disk(disk_name, disk_path, disk_format, disk_size):
 
 def create_virtual_machine(disk_path, memory, cpu, iso):
     cmd = [
-        "qemu-system-x86_64",
+        r"C:/msys64/ucrt64/bin/qemu-img.exe",
         "-hda",
         disk_path,
         "-nographic",
