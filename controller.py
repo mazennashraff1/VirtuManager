@@ -188,21 +188,7 @@ class Controller:
             return "Please Fill out all the information"
 
     def callVD(self, diskName, diskPath, diskFormat, diskSize):
-        formats = [
-            "qcow2",
-            "vmdk",
-            "vdi",
-            "raw",
-            "vhd",
-            "vhdx",
-            "vbox",
-            "hdd",
-            "img",
-            "dmg",
-            "qed",
-            "vzdisk",
-            "zfs",
-        ]
+        formats = ["qcow2", "vmdk", "vdi", "raw", "vhd"]
         if diskName != "" and diskFormat != "" and diskSize != "" and diskPath != "":
             if diskFormat not in formats:
                 return f"Virtual disk Format selected '{diskFormat}'. Expected one of: {', '.join(formats)}."

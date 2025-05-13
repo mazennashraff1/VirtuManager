@@ -32,16 +32,27 @@ def get_qemu_img_path():
 def create_virtual_disk(disk_name, disk_path, disk_format, disk_size):
     full_path = os.path.join(disk_path, f"{disk_name}.{disk_format}")
     qemu_img_path = get_qemu_img_path()
-    cmd = [
-        qemu_img_path,
-        "create",
-        "-f",
-        disk_format,
-        full_path,
-        disk_size,
-    ]
+    if disk_format != "vhd":
+        cmd = [
+            qemu_img_path,
+            "create",
+            "-f",
+            disk_format,
+            full_path,
+            disk_size + "G",
+        ]
+    else:
+        cmd = [
+            qemu_img_path,
+            "create",
+            "-f",
+            "vpc",
+            full_path,
+            disk_size + "G",
+        ]
     try:
         subprocess.run(cmd, check=True)
+        print(cmd)
         print(f"Disk {full_path} created successfully.")
     except subprocess.CalledProcessError as e:
         print("Error creating disk:", e)
