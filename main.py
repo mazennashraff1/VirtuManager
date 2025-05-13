@@ -44,7 +44,7 @@ def HomePage():
     root.title("Virtual Machines")
     root.geometry("1000x600")
 
-    bg_image_pil = Image.open(".\imgs\Virtual Manager.png").resize((1000, 600))
+    bg_image_pil = Image.open(r".\imgs\Virtual Manager.png").resize((1000, 600))
     root.bg_image = CTkImage(light_image=bg_image_pil, size=(1000, 600))
     bg_label = ctk.CTkLabel(root, image=root.bg_image, text="")
     bg_label.place(x=0, y=0, relwidth=1, relheight=1)
