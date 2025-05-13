@@ -113,7 +113,7 @@ class Controller:
 
         return True
 
-    def _saveVM(self, type, diskPath, RAM, CPU, isoPath):
+    def _saveVM(self, diskPath, RAM, CPU, isoPath):
         fileName = "logs/allVM.txt"
 
         os.makedirs(os.path.dirname(fileName), exist_ok=True)
@@ -122,9 +122,9 @@ class Controller:
 
         with open(fileName, "a") as f:
             if not fileExists:
-                f.write("Type,Disk Path,RAM (MB),CPU (Cores),ISO Path\n")
+                f.write("Disk Path,RAM (MB),CPU (Cores),ISO Path\n")
 
-            f.write(f"{type},{diskPath},{RAM},{CPU},{isoPath}\n")
+            f.write(f"{diskPath},{RAM},{CPU},{isoPath}\n")
 
     def _saveVD(self, diskName, diskPath, diskFormat, diskSize):
         fileName = "logs/allVD.txt"
@@ -140,6 +140,49 @@ class Controller:
 
             fullDiskPath = os.path.join(diskPath, diskName)
             f.write(f"{fullDiskPath},{diskFormat},{diskSize}\n")
+
+    def readVDs(self):
+        VDs = []
+        fileName = "logs/allVD.txt"
+
+        # Check if the file exists
+        if os.path.isfile(fileName):
+            with open(fileName, "r") as f:
+                lines = f.readlines()[1:]
+
+                for line in lines:
+                    diskPath, diskFormat, diskSize = line.strip().split(",")
+                    VDs.append(
+                        {
+                            "Disk Path": diskPath,
+                            "Format": diskFormat,
+                            "Size (GB)": diskSize,
+                        }
+                    )
+
+        return VDs
+
+    def readVMs(self):
+        VMs = []
+        fileName = "logs/allVM.txt"
+
+        # Check if the file exists
+        if os.path.isfile(fileName):
+            with open(fileName, "r") as f:
+                lines = f.readlines()[1:]
+
+                for line in lines:
+                    type, diskPath, RAM, CPU, isoPath = line.strip().split(",")
+                    VMs.append(
+                        {
+                            "Disk Path": diskPath,
+                            "RAM (MB)": RAM,
+                            "CPU (Cores)": CPU,
+                            "ISO Path": isoPath,
+                        }
+                    )
+
+        return VMs
 
     def callVM(self, diskPath, requiredRAM, requiredCPU, isoPath):
         """Create a virtual machine if all system requirements (disk, RAM, CPU, ISO file) are met."""

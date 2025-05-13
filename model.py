@@ -52,7 +52,6 @@ def create_virtual_disk(disk_name, disk_path, disk_format, disk_size):
         ]
     try:
         subprocess.run(cmd, check=True)
-        print(cmd)
         print(f"Disk {full_path} created successfully.")
     except subprocess.CalledProcessError as e:
         print("Error creating disk:", e)
