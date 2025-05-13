@@ -113,6 +113,34 @@ class Controller:
 
         return True
 
+    def _saveVM(self, type, diskPath, RAM, CPU, isoPath):
+        fileName = "logs/allVM.txt"
+
+        os.makedirs(os.path.dirname(fileName), exist_ok=True)
+
+        fileExists = os.path.isfile(fileName)
+
+        with open(fileName, "a") as f:
+            if not fileExists:
+                f.write("Type,Disk Path,RAM (MB),CPU (Cores),ISO Path\n")
+
+            f.write(f"{type},{diskPath},{RAM},{CPU},{isoPath}\n")
+
+    def _saveVD(self, diskName, diskPath, diskFormat, diskSize):
+        fileName = "logs/allVD.txt"
+
+        # Ensure the directory exists
+        os.makedirs(os.path.dirname(fileName), exist_ok=True)
+
+        fileExists = os.path.isfile(fileName)
+
+        with open(fileName, "a") as f:
+            if not fileExists:
+                f.write("Disk Path,Format,Size (GB)\n")
+
+            fullDiskPath = os.path.join(diskPath, diskName)
+            f.write(f"{fullDiskPath},{diskFormat},{diskSize}\n")
+
     def callVM(self, diskPath, requiredRAM, requiredCPU, isoPath):
         """Create a virtual machine if all system requirements (disk, RAM, CPU, ISO file) are met."""
         response = ""
@@ -144,6 +172,7 @@ class Controller:
             # If all checks pass
             if disk and ram == True and cpu == True and iso:
                 create_virtual_machine(diskPath, requiredRAM, requiredCPU, isoPath)
+                self._saveVM(diskPath, requiredRAM, requiredCPU, isoPath)
                 return "Creating VM Successfully"
             # Otherwise accumulate error messages
             if not disk:
@@ -185,6 +214,7 @@ class Controller:
                 dSize, dMessage = self._validateDiskSpace(diskSize, diskPath)
                 if dSize:
                     create_virtual_disk(diskName, diskPath, diskFormat, diskSize)
+                    self._saveVD(diskName, diskPath, diskFormat, diskSize)
                     return (
                         f"Virtual disk '{diskName}' created successfully at {diskPath}."
                     )

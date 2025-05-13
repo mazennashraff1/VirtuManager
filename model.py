@@ -24,7 +24,10 @@ def get_qemu_img_path():
         if os.path.isfile(path):
             return path
 
-    raise FileNotFoundError("qemu-img.exe was not found in system PATH or any known MSYS2 environments.")
+    raise FileNotFoundError(
+        "qemu-img.exe was not found in system PATH or any known MSYS2 environments."
+    )
+
 
 def create_virtual_disk(disk_name, disk_path, disk_format, disk_size):
     full_path = os.path.join(disk_path, f"{disk_name}.{disk_format}")
@@ -63,3 +66,13 @@ def create_virtual_machine(disk_path, memory, cpu, iso):
         subprocess.run(cmd)
     except subprocess.CalledProcessError as e:
         print("Error launching VM:", e)
+
+
+def list_running_containers():
+    cmd = ["docker", "ps"]
+
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+        print(result.stdout)
+    except subprocess.CalledProcessError as e:
+        print("Error listing running containers:", e)
