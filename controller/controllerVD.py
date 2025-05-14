@@ -69,7 +69,7 @@ class VirtualDiskController:
         with open(fileName, "a") as f:
             if not fileExists:
                 f.write("Disk Path,Format,Size (GB)\n")
-            fullDiskPath = os.path.join(diskPath, diskName)
+            fullDiskPath = os.path.join(diskPath, diskName).replace("\\", "/")
             f.write(f"{fullDiskPath},{diskFormat},{diskSize}\n")
 
     def readVDs(self):

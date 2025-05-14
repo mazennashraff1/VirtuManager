@@ -1,8 +1,6 @@
-# view/listVDPage.py
-
 import customtkinter as ctk
-from controller.controllerVD import VirtualDiskController
 import tkinter.messagebox as messagebox
+from controller.controllerVD import VirtualDiskController
 
 
 class ListVirtualDisksPage:
@@ -33,19 +31,22 @@ class ListVirtualDisksPage:
                 width=120,
             ).grid(row=0, column=col, padx=5, pady=5)
 
-        try:
-            with open("logs/allVD.txt", "r") as file:
-                lines = file.readlines()
+        VDs = self.controller.readVDs()
+        if not VDs:
+            ctk.CTkLabel(
+                self.window, text="No virtual disks found.", text_color="white"
+            ).pack(pady=10)
+        else:
+            for i, vd in enumerate(VDs, start=1):
+                full_path = vd["Disk Path"]
+                format_ = vd["Format"]
+                size = vd["Size (GB)"]
 
-            for i, line in enumerate(lines, start=1):
-                parts = line.strip().split(",")
-                if len(parts) != 4:
-                    continue
-
-                path, file_name, format_, size = parts
+                file_name = full_path.split("/")[-1]
+                dir_path = full_path.rsplit("/", 1)[0]
 
                 ctk.CTkLabel(
-                    scroll_frame, text=path, text_color="white", width=120
+                    scroll_frame, text=dir_path, text_color="white", width=120
                 ).grid(row=i, column=0, padx=5, pady=5)
                 ctk.CTkLabel(
                     scroll_frame, text=file_name, text_color="white", width=120
@@ -63,7 +64,7 @@ class ListVirtualDisksPage:
                     fg_color="#004aad",
                     text_color="white",
                     width=80,
-                    command=lambda p=path, f=file_name, fm=format_, s=size: self.edit_disk(
+                    command=lambda p=dir_path, f=file_name, fm=format_, s=size: self.edit_disk(
                         p, f, fm, s
                     ),
                 ).grid(row=i, column=4, padx=5, pady=5)
@@ -76,11 +77,6 @@ class ListVirtualDisksPage:
                     width=80,
                     command=lambda f=file_name: self.delete_disk(f),
                 ).grid(row=i, column=5, padx=5, pady=5)
-
-        except FileNotFoundError:
-            ctk.CTkLabel(
-                self.window, text="Error: allVD.txt not found", text_color="red"
-            ).pack(pady=10)
 
     def edit_disk(self, path, file_name, format_, size):
         from view.vdPage import CreateVirtualDiskPage
@@ -96,4 +92,4 @@ class ListVirtualDisksPage:
             result = self.controller.deleteVD(file_name)
             messagebox.showinfo("Delete Result", result)
             self.window.destroy()
-            ListVirtualDisksPage(self.root)  # Refresh the list
+            ListVirtualDisksPage(self.root)

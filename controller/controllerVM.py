@@ -51,7 +51,7 @@ class VirtualMachineController:
 
         with open(fileName, "a") as f:
             if not fileExists:
-                f.write("Disk Path,RAM (MB),CPU (Cores),ISO Path\n")
+                f.write("ISO Path,Disk Path,RAM (GB),CPU (Cores)\n")
             f.write(f"{diskPath},{RAM},{CPU},{isoPath}\n")
 
     def readVMs(self):
@@ -64,10 +64,10 @@ class VirtualMachineController:
                     diskPath, RAM, CPU, isoPath = line.strip().split(",")
                     VMs.append(
                         {
+                            "ISO File": isoPath,
                             "Disk Path": diskPath,
-                            "RAM (MB)": RAM,
+                            "RAM (GB)": RAM,
                             "CPU (Cores)": CPU,
-                            "ISO Path": isoPath,
                         }
                     )
         return VMs
