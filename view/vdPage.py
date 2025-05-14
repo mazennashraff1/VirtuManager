@@ -3,6 +3,7 @@ import customtkinter as ctk
 from tkinter import filedialog
 import tkinter.messagebox as messagebox
 from controller.controllerVD import VirtualDiskController
+from view.listVDPage import ListVirtualDisksPage
 
 
 def add_sidebar_button(parent, text, command, disabled=False):
@@ -21,8 +22,9 @@ def add_sidebar_button(parent, text, command, disabled=False):
 
 
 class CreateVirtualDiskPage:
-    def __init__(self, root):
+    def __init__(self, root, disk_data=None):
         self.root = root
+        self.disk_data = disk_data  # Contains disk details if in edit mode
         self.window = ctk.CTkToplevel(fg_color="#545454")
         self.window.title("Create Virtual Disk")
         self.window.geometry("800x500")
@@ -31,6 +33,7 @@ class CreateVirtualDiskPage:
         self.sidebar.pack(side="left", fill="y")
         add_sidebar_button(self.sidebar, "Home", self.go_home)
         add_sidebar_button(self.sidebar, "Create Disk", None, disabled=True)
+        add_sidebar_button(self.sidebar, "List All VDs", self.go_list_vd)
         add_sidebar_button(self.sidebar, "Create VM", self.go_vm)
 
         self.main_frame = ctk.CTkFrame(self.window, fg_color="#545454")
@@ -38,7 +41,7 @@ class CreateVirtualDiskPage:
 
         ctk.CTkLabel(
             self.main_frame,
-            text="Create Virtual Disk",
+            text="Create Virtual Disk" if not self.disk_data else "Edit Virtual Disk",
             font=("Segoe UI", 20, "bold"),
             text_color="white",
         ).pack(anchor="w", pady=(0, 20))
@@ -51,7 +54,18 @@ class CreateVirtualDiskPage:
         )
         self.disk_size = self.add_input("Disk Size (GB)", default="1")
 
-        self.add_button_row(self.create_disk, self.back, "Create Disk", "Back")
+        if self.disk_data:  # If editing an existing disk, populate the fields
+            self.disk_path.insert(0, self.disk_data[0])
+            self.file_name.insert(0, self.disk_data[1])
+            self.disk_format.set(self.disk_data[2])
+            self.disk_size.insert(0, self.disk_data[3])
+
+        self.add_button_row(
+            self.save_disk if self.disk_data else self.create_disk,
+            self.back,
+            "Save Disk" if self.disk_data else "Create Disk",
+            "Back",
+        )
 
     def add_input(self, label, browse_command=None, default=""):
         ctk.CTkLabel(self.main_frame, text=label, text_color="white").pack(anchor="w")
@@ -118,6 +132,19 @@ class CreateVirtualDiskPage:
         )
         messagebox.showinfo("Operation Result", result)
 
+    def save_disk(self):
+        controller = VirtualDiskController()
+        result = controller.updateVD(  # Assuming updateVD exists in your controller
+            self.disk_data[1],  # Original disk path or identifier
+            self.file_name.get(),
+            self.disk_path.get(),
+            self.disk_format.get(),
+            self.disk_size.get(),
+        )
+        messagebox.showinfo("Operation Result", result)
+        self.window.destroy()
+        self.root.deiconify()
+
     def back(self):
         self.window.destroy()
         self.root.deiconify()
@@ -130,3 +157,9 @@ class CreateVirtualDiskPage:
 
         self.window.destroy()
         CreateVirtualMachinePage(self.root)
+
+    def go_list_vd(self):
+        from view.listVDPage import ListVirtualDisksPage
+
+        self.window.destroy()
+        ListVirtualDisksPage(self.root)

@@ -3,6 +3,7 @@ import customtkinter as ctk
 from tkinter import filedialog
 import tkinter.messagebox as messagebox
 from controller.controllerVM import VirtualMachineController
+from view.listVMPage import ListVirtualMachinesPage
 
 
 def add_sidebar_button(parent, text, command, disabled=False):
@@ -30,8 +31,8 @@ class CreateVirtualMachinePage:
         self.sidebar = ctk.CTkFrame(self.window, width=160, fg_color="white")
         self.sidebar.pack(side="left", fill="y")
         add_sidebar_button(self.sidebar, "Home", self.go_home)
-        add_sidebar_button(self.sidebar, "Create Disk", self.go_vdisk)
         add_sidebar_button(self.sidebar, "Create VM", None, disabled=True)
+        add_sidebar_button(self.sidebar, "List All VMs", self.go_list_vms)
 
         self.main_frame = ctk.CTkFrame(self.window, fg_color="#545454")
         self.main_frame.pack(side="right", fill="both", expand=True, padx=40, pady=30)
@@ -124,3 +125,13 @@ class CreateVirtualMachinePage:
 
         self.window.destroy()
         CreateVirtualDiskPage(self.root)
+
+    def go_list_vms(self):
+        self.window.withdraw()
+        page = ListVirtualMachinesPage(self.window)
+
+        def on_close():
+            page.window.destroy()
+            self.window.deiconify()
+
+        page.window.protocol("WM_DELETE_WINDOW", on_close)

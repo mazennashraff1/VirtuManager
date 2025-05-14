@@ -19,3 +19,7 @@ def list_all_containers():
         print(result.stdout)
     except subprocess.CalledProcessError as e:
         print("Error listing all containers:", e)
+
+
+def pull_image(image_name):
+    return
