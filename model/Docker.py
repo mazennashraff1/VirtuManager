@@ -1,23 +1,20 @@
 import subprocess
-import os
-
-
-def list_running_containers():
-    cmd = ["docker", "ps"]
-    try:
-        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
-        print(result.stdout)
-    except subprocess.CalledProcessError as e:
-        print("Error listing running containers:", e)
 
 
 def list_all_containers():
-    cmd = ["docker", "ps", "-a"]
+    cmd = [
+        "docker",
+        "ps",
+        "-a",
+        "--format",
+        "{{.ID}} {{.Names}} {{.Status}} {{.Image}}",
+    ]
     try:
         result = subprocess.run(cmd, capture_output=True, text=True, check=True)
-        print(result.stdout)
+        return result.stdout.strip()
     except subprocess.CalledProcessError as e:
         print("Error listing all containers:", e)
+        return ""
 
 
 def pull_image(image_name: str):
@@ -39,40 +36,25 @@ def pull_image(image_name: str):
         print(e.stderr if e.stderr else str(e))
 
 
-def create_dockerfile_interactive(dockerfile_content,path, base_image, app_file):
-
-    # dockerfile_content = f"""
-    # FROM {base_image}
-    # COPY . /app
-    # WORKDIR /app
-    # RUN pip install --no-cache-dir -r requirements.txt
-    # CMD ["python", "{app_file}"]
-    # """.strip()
-
-    os.makedirs(path, exist_ok=True)
-    dockerfile_path = os.path.join(path, "Dockerfile")
-    with open(dockerfile_path, "w") as f:
-        f.write(dockerfile_content)
-
-    print(f"Dockerfile created at {dockerfile_path}")
+def create_dockerfile(content, path):
+    try:
+        with open(path, "w") as f:
+            f.write(content)
+            print(f"Dockerfile created at {path}")
+            return True, f"Dockerfile created at {path}"
+    except Exception as e:
+        return False, f"Failed to save Dockerfile: {str(e)}"
 
 
-def build_docker_image_interactive(path, tag):
+def build_docker_image(docker_path, create_path, tag):
+    cmd = ["docker", "build", "-f", docker_path, "-t", tag, create_path]
 
-    cmd = ["docker", "build", "-t", tag, path]
     try:
         subprocess.run(cmd, check=True)
-        print(f"Docker image '{tag}' built successfully.")
+        return True, f"Docker image '{tag}' built successfully."
     except subprocess.CalledProcessError as e:
-        print("Error building Docker image:", e)
+        return False, f"Error building Docker image: {e}"
 
 
-
-
-
-if __name__ == "__main__":
-    # create_dockerfile("myapp", base_image="python:3.9", app_file="app.py")
-
-    # build_docker_image("myapp", tag="my-python-app")
-
-    pull_image("ubuntu")
+def list_all_images():
+    return

@@ -1,23 +1,166 @@
 import os
 import requests
-from model.Docker import pull_image
+from model.Docker import (
+    pull_image,
+    create_dockerfile,
+    build_docker_image,
+    list_all_containers,
+    list_all_images,
+)
 
 
 class DockerController:
     def __init__(self):
         pass
 
-    def parseDockerList(self, output: str):
+    def _checkPath(self, path: str) -> bool:
+        if os.path.isfile(path):
+            return True
+        elif os.path.isdir(path):
+            return True
+        else:
+            return False
+
+    def _parseDockerList(self, output: str):
         lines = output.strip().split("\n")
-        headers = lines[0].split()
         containers = []
 
-        for line in lines[1:]:
-            values = line.split()
-            containerInfo = {headers[i]: values[i] for i in range(len(headers))}
-            containers.append(containerInfo)
+        for line in lines:
+            parts = line.split(maxsplit=3)
+            statusStr = parts[2]
+            isRunning = statusStr.startswith("Up")
+            if len(parts) == 4:
+                container = {
+                    "ID": parts[0],
+                    "Name": parts[1],
+                    "Status": parts[2],
+                    "Image": parts[3],
+                    "Running": isRunning,
+                }
+                containers.append(container)
 
         return containers
+
+    def _parseDockerImages(self, output: str):
+        lines = output.strip().split("\n")
+        images = []
+
+        if len(lines) <= 1:
+            return images
+
+        # Skip header
+        for line in lines[1:]:
+            parts = line.split(maxsplit=4)
+            if len(parts) < 5:
+                continue
+
+            image = {
+                "Repository": parts[0],
+                "Tag": parts[1],
+                "ImageID": parts[2],
+                "Created": parts[3],
+                "Size": parts[4],
+            }
+            images.append(image)
+
+        return images
+
+    def _saveLog(self, data):
+        fileName = "logs/allDockerFiles.txt"
+        os.makedirs(os.path.dirname(fileName), exist_ok=True)
+        fileExists = os.path.isfile(fileName)
+
+        lastID = 0
+        if fileExists:
+            with open(fileName, "r") as f:
+                lines = f.readlines()
+                if len(lines) > 1:
+                    last_line = lines[-1].strip()
+                    if last_line:
+                        try:
+                            lastID = int(last_line.split(",")[0])
+                        except ValueError:
+                            lastID = 0
+
+        newID = lastID + 1
+
+        with open(fileName, "a") as f:
+            if not fileExists:
+                f.write("ID,File Path,Description\n")
+            f.write(f"{newID},{data['Path']},{data['desc']}\n")
+
+    def _readLog(self):
+        fileName = "logs/allDockerFiles.txt"
+        data = []
+
+        if not os.path.isfile(fileName):
+            return data
+
+        with open(fileName, "r") as f:
+            lines = f.readlines()
+
+            for line in lines[1:]:
+                line = line.strip()
+                if not line:
+                    continue
+                parts = line.split(",", 2)
+                if len(parts) == 3:
+                    try:
+                        entry = {
+                            "ID": int(parts[0]),
+                            "Path": parts[1],
+                            "desc": parts[2],
+                        }
+                        data.append(entry)
+                    except ValueError:
+                        continue
+
+        return data
+
+    def saveDockerFile(self, path, content, description):
+        if not path or not content:
+            return False, "Both path and content are required."
+
+        pth = self._checkPath(path)
+        if not pth:
+            return False, "Please Provide a Valid Path to Create a DockerFile in it"
+
+        path = os.path.join(path, "Dockerfile")
+        response, msg = create_dockerfile(content, path)
+
+        if not response:
+            return False, msg
+
+        path = path.replace("\\", "/")
+        data = {"Path": path, "desc": description}
+        self._saveLog(data)
+
+        return response, msg
+
+    def buildDockerImage(self, name, tag, dockerFile, buildDir):
+        if not all([name, tag, dockerFile, buildDir]):
+            return False, "All fields are required."
+
+        dockerFileCheck = self._checkPath(dockerFile)
+        if not dockerFileCheck:
+            return False, "Please Provide a Valid Path of the DockerFile"
+
+        buildDirCheck = self._checkPath(buildDir)
+        if not buildDirCheck:
+            return False, "Please Provide a Valid Path to save the Build in it"
+
+        imageTag = f"{name}:{tag}"
+        return build_docker_image(dockerFile, buildDir, imageTag)
+
+    def getAllContainers(self):
+        output = list_all_containers()
+        containers = self._parseDockerList(output)
+        return containers
+
+    def getAllImages(self):
+        output = list_all_images()
+        images = self._parseDockerImages(output)
+        return images
 
     def fetchDockerImages(self, query, pageSize=5):
         try:
