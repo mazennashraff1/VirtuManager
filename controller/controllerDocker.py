@@ -3,8 +3,10 @@ import requests
 from model.Docker import (
     run_image,
     pull_image,
+    delete_image,
     stop_container,
     list_all_images,
+    start_container,
     create_dockerfile,
     build_docker_image,
     list_all_containers,
@@ -24,24 +26,26 @@ class DockerController:
             return False
 
     def _parseDockerList(self, output: str):
-        lines = output.strip().split("\n")
-        containers = []
+        if output != "":
+            lines = output.strip().split("\n")
+            containers = []
 
-        for line in lines:
-            parts = line.split(maxsplit=3)
-            statusStr = parts[2]
-            isRunning = statusStr.startswith("Up")
-            if len(parts) == 4:
+            for line in lines:
+                parts = line.split()
+                print(parts)
+                statusStr = parts[2]
+                isRunning = statusStr.startswith("Up")
                 container = {
                     "ID": parts[0],
                     "Name": parts[1],
                     "Status": parts[2],
-                    "Image": parts[3],
+                    "Image": parts[-1],
                     "Running": isRunning,
                 }
                 containers.append(container)
 
-        return containers
+            return containers
+        return ""
 
     def _parseDockerImages(self, output: str):
         lines = output.strip().split("\n")
@@ -206,6 +210,7 @@ class DockerController:
 
     def getAllContainers(self):
         output = list_all_containers()
+        print(output)
         containers = self._parseDockerList(output)
         return containers
 
@@ -226,8 +231,15 @@ class DockerController:
     def pullDockerImage(self, image: str) -> str:
         pull_image(image)
 
-    def runDockerImage(self, imgName, contName, hostPort, contPort):
+    def runDockerImage(self, imgName, imgTag, contName, hostPort, contPort):
+        imgName = f"{imgName}:{imgTag}"
         return run_image(imgName, contName, hostPort, contPort)
+
+    def startContainer(self, id):
+        return start_container(id)
 
     def stopContainer(id):
         return stop_container(id)
+
+    def deleteImage(id):
+        return delete_image(id)

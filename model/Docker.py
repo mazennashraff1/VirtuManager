@@ -58,6 +58,7 @@ def run_image(image_name, container_name, host_port, container_port):
         image_name,
     ]
     try:
+        print(cmd)
         result = subprocess.run(cmd, capture_output=True, text=True, check=True)
         return (
             True,
@@ -65,6 +66,38 @@ def run_image(image_name, container_name, host_port, container_port):
         )
     except subprocess.CalledProcessError as e:
         return False, f"Failed to run container:\n{e.stderr.strip()}"
+
+
+def start_container(container_id_or_name):
+    cmd = [
+        "docker",
+        "start",
+        container_id_or_name,
+    ]
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+        return (
+            True,
+            f"Container '{container_id_or_name}' started successfully.\n{result.stdout.strip()}",
+        )
+    except subprocess.CalledProcessError as e:
+        return False, f"Failed to start container:\n{e.stderr.strip()}"
+
+
+def delete_image(image_name_or_id):
+    cmd = [
+        "docker",
+        "rmi",
+        image_name_or_id,
+    ]
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+        return (
+            True,
+            f"Image '{image_name_or_id}' deleted successfully.\n{result.stdout.strip()}",
+        )
+    except subprocess.CalledProcessError as e:
+        return False, f"Failed to delete image:\n{e.stderr.strip()}"
 
 
 def create_dockerfile(content, path):

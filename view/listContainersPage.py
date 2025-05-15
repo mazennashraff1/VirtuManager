@@ -49,7 +49,7 @@ class ListRunningContainersPage:
         self.load_containers()
 
     def load_containers(self):
-        containers = self.controller.list_running_containers()
+        containers = self.controller.getAllContainers()
         for i, cont in enumerate(containers):
             tk.Label(
                 self.container_frame, text=cont["ID"], bg="#545454", fg="white"
@@ -74,18 +74,12 @@ class ListRunningContainersPage:
             ).grid(row=i + 1, column=4, padx=5)
 
     def run_container(self, id):
-        from view.runImagePage import RunDockerImagePage
-
-        # Get container details by ID
-        container = next(
-            (c for c in self.controller.list_running_containers() if c["ID"] == id),
-            None,
-        )
-        if container:
-            self.window.destroy()
-            RunDockerImagePage(self.window, container)
+        res, msg = self.controller.startContainer(id)
+        if res:
+            messagebox.showinfo(msg)
         else:
-            messagebox.showerror("Error", "Container not found.")
+            messagebox.showerror(msg)
+        self.refresh()
 
     def stop_container(self, container_id):
         res, msg = self.controller.stopContainer(container_id)

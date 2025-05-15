@@ -37,7 +37,7 @@ class ListDockerImagesPage:
         headers = ["Repository", "Tag", "ImageID", "Created", "Size", "Action"]
         for i, header in enumerate(headers):
             tk.Label(
-                self.container_frame,
+                self.image_frame,
                 text=header,
                 font=("Segoe UI", 10, "bold"),
                 bg="#545454",
@@ -86,19 +86,23 @@ class ListDockerImagesPage:
                 button_frame,
                 text="Delete",
                 width=80,
-                command=lambda n=img["Repository"], t=img["Tag"]: self.delete_image(
-                    n, t
-                ),
+                command=lambda id=img["ImageID"]: self.delete_image(id),
             ).pack()
 
-    def delete_image(self, name, tag):
-        result = self.controller.delete_docker_image(name, tag)
-        messagebox.showinfo("Delete Result", result)
+    def delete_image(self, id):
+        res, msg = self.controller.deleteImage(id)
+        if res:
+            messagebox.showinfo(msg)
+        else:
+            messagebox.showerror(msg)
         self.refresh()
 
     def run_image(self, name):
-        result = self.controller.run_docker_image(name)
-        messagebox.showinfo("Run Result", result)
+        res, msg = self.controller.run_docker_image(name)
+        if res:
+            messagebox.showinfo(msg)
+        else:
+            messagebox.showerror(msg)
 
     def refresh(self):
         for widget in self.image_frame.winfo_children():
@@ -106,5 +110,5 @@ class ListDockerImagesPage:
         self.load_images()
 
     def go_back(self):
-        self.window.destroy()  # Close the current window
-        self.root.deiconify()  # Show the main/root window again (or you can change this to navigate to another page)
+        self.window.destroy()
+        self.root.deiconify()
