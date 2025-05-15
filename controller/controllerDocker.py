@@ -1,11 +1,13 @@
 import os
 import requests
 from model.Docker import (
+    run_image,
     pull_image,
+    stop_container,
+    list_all_images,
     create_dockerfile,
     build_docker_image,
     list_all_containers,
-    list_all_images,
 )
 
 
@@ -89,6 +91,30 @@ class DockerController:
                 f.write("ID,File Path,Description\n")
             f.write(f"{newID},{data['Path']},{data['desc']}\n")
 
+    def _editLog(self, id, data):
+        fileName = "logs/allDockerFiles.txt"
+        os.makedirs(os.path.dirname(fileName), exist_ok=True)
+
+        with open(fileName, "r") as f:
+            lines = f.readlines()
+
+            header = lines[0] if lines else ""
+            new_lines = [header]
+            edited = False
+
+            for line in lines[1:]:
+                parts = line.strip().split(",", 2)
+                if len(parts) >= 3 and parts[0] == str(id):
+                    # Edit this line only
+                    new_lines.append(f"{id},{data['Path']},{data['desc']}\n")
+                    edited = True
+                else:
+                    new_lines.append(line)
+
+            if edited:
+                with open(fileName, "w") as f:
+                    f.writelines(new_lines)
+
     def _readLog(self):
         fileName = "logs/allDockerFiles.txt"
         data = []
@@ -116,6 +142,32 @@ class DockerController:
                         continue
 
         return data
+
+    def getDockerFileContent(self, path):
+        with open(path, "r", encoding="utf-8") as f:
+            return f.read().strip()
+
+    def saveEditedDockerFile(self, id, path, content, description):
+        if not path or not content:
+            return False, "Both path and content are required."
+
+        pth = self._checkPath(path)
+        if not pth:
+            return False, "Please Provide a Valid Path to Create a DockerFile in it"
+
+        response, msg = create_dockerfile(content, path)
+
+        if not response:
+            return False, msg
+
+        path = path.replace("\\", "/")
+        data = {"Path": path, "desc": description}
+        self._saveLog(data)
+
+        return response, msg
+
+    def readDockerfiles(self):
+        return self._readLog()
 
     def saveDockerFile(self, path, content, description):
         if not path or not content:
@@ -173,3 +225,9 @@ class DockerController:
 
     def pullDockerImage(self, image: str) -> str:
         pull_image(image)
+
+    def runDockerImage(self, imgName, contName, hostPort, contPort):
+        return run_image(imgName, contName, hostPort, contPort)
+
+    def stopContainer(id):
+        return stop_container(id)

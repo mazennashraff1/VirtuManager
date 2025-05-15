@@ -31,7 +31,6 @@ class DockerImagePullPage:
         self.sidebar.pack(side="left", fill="y")
         add_sidebar_button(self.sidebar, "Home", self.go_home)
         add_sidebar_button(self.sidebar, "Pull Image", None, disabled=True)
-        add_sidebar_button(self.sidebar, "Other Page", self.go_other_page)
 
         self.main_frame = ctk.CTkFrame(self.window, fg_color="#545454")
         self.main_frame.pack(side="right", fill="both", expand=True, padx=40, pady=30)
@@ -154,9 +153,3 @@ class DockerImagePullPage:
     def go_home(self):
         self.window.destroy()
         self.root.deiconify()
-
-    def go_other_page(self):
-        from vmPage import CreateVirtualMachinePage
-
-        self.window.destroy()
-        CreateVirtualMachinePage(self.root)

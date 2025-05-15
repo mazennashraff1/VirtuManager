@@ -19,7 +19,9 @@ def add_sidebar_button(parent, text, command, disabled=False):
 
 
 class CreateDockerfilePage:
-    def __init__(self, root, file_path=None, file_content=None, description=None):
+    def __init__(
+        self, root, id=None, file_path=None, file_content=None, description=None
+    ):
         self.root = root
         self.edit_mode = file_path is not None
         self.file_path = file_path
@@ -32,7 +34,12 @@ class CreateDockerfilePage:
         self.sidebar.pack(side="left", fill="y")
         add_sidebar_button(self.sidebar, "Home", self.go_home)
         add_sidebar_button(self.sidebar, "Create Dockerfile", None, disabled=True)
-        add_sidebar_button(self.sidebar, "List Dockerfiles", self.go_list)
+        add_sidebar_button(self.sidebar, "List Dockerfiles", self.go_list_files)
+        add_sidebar_button(self.sidebar, "Pull Image from DockerHub", self.go_pull)
+        add_sidebar_button(self.sidebar, "Build Docker Image", self.go_build)
+        add_sidebar_button(self.sidebar, "Run Docker Image", self.go_run_img)
+        add_sidebar_button(self.sidebar, "List Docker Images", self.go_list_imgs)
+        add_sidebar_button(self.sidebar, "List Docker Containers", self.go_list_conts)
 
         self.main_frame = ctk.CTkFrame(self.window, fg_color="#545454")
         self.main_frame.pack(side="right", fill="both", expand=True, padx=40, pady=30)
@@ -86,35 +93,68 @@ class CreateDockerfilePage:
         self.content_textbox.pack(anchor="w", pady=10)
 
         if self.edit_mode:
+            self.id = id
             self.path_entry.insert(0, file_path)
             self.content_textbox.insert("1.0", file_content)
             if description:
                 self.description_entry.insert(0, description)
-
-        button_frame = ctk.CTkFrame(self.main_frame, fg_color="#545454")
-        button_frame.pack(anchor="center", pady=20)
-        ctk.CTkButton(
-            button_frame,
-            text="Save Dockerfile",
-            command=self.on_save_click,
-            fg_color="green",
-            text_color="white",
-            width=150,
-        ).pack(side="left", padx=10)
-        ctk.CTkButton(
-            button_frame,
-            text="Back",
-            command=self.go_home,
-            fg_color="red",
-            text_color="white",
-            width=150,
-        ).pack(side="left", padx=10)
+            button_frame = ctk.CTkFrame(self.main_frame, fg_color="#545454")
+            button_frame.pack(anchor="center", pady=20)
+            ctk.CTkButton(
+                button_frame,
+                text="Save Dockerfile",
+                command=self.on_edit_click,
+                fg_color="green",
+                text_color="white",
+                width=150,
+            ).pack(side="left", padx=10)
+            ctk.CTkButton(
+                button_frame,
+                text="Back",
+                command=self.go_home,
+                fg_color="red",
+                text_color="white",
+                width=150,
+            ).pack(side="left", padx=10)
+        else:
+            button_frame = ctk.CTkFrame(self.main_frame, fg_color="#545454")
+            button_frame.pack(anchor="center", pady=20)
+            ctk.CTkButton(
+                button_frame,
+                text="Save Dockerfile",
+                command=self.on_save_click,
+                fg_color="green",
+                text_color="white",
+                width=150,
+            ).pack(side="left", padx=10)
+            ctk.CTkButton(
+                button_frame,
+                text="Back",
+                command=self.go_home,
+                fg_color="red",
+                text_color="white",
+                width=150,
+            ).pack(side="left", padx=10)
 
     def browse_path(self):
         path = filedialog.askdirectory()
         if path:
             self.path_entry.delete(0, "end")
             self.path_entry.insert(0, path)
+
+    def on_edit_click(self):
+        path = self.path_entry.get().strip()
+        content = self.content_textbox.get("1.0", "end").strip()
+        description = self.description_entry.get().strip()
+
+        success, message = self.controller.saveEditedDockerFile(
+            self.id, path, content, description
+        )
+
+        if success:
+            messagebox.showinfo("Success", message)
+        else:
+            messagebox.showerror("Error", message)
 
     def on_save_click(self):
         path = self.path_entry.get().strip()
@@ -132,8 +172,38 @@ class CreateDockerfilePage:
         self.window.destroy()
         self.root.deiconify()
 
-    def go_list(self):
+    def go_list_files(self):
         from view.listDKPage import ListDockerfilesPage
 
         self.window.destroy()
         ListDockerfilesPage(self.root)
+
+    def go_list_imgs(self):
+        from view.listImagesPage import ListDockerImagesPage
+
+        self.window.destroy()
+        ListDockerImagesPage(self.root)
+
+    def go_pull(self):
+        from view.pullDockerImage import DockerImagePullPage
+
+        self.window.destroy()
+        DockerImagePullPage(self.root)
+
+    def go_build(self):
+        from view.buildDockerImage import BuildDockerImagePage
+
+        self.window.destroy()
+        BuildDockerImagePage(self.root)
+
+    def go_run_img(self):
+        from view.runImagePage import RunDockerImagePage
+
+        self.window.destroy()
+        RunDockerImagePage(self.root)
+
+    def go_list_conts(self):
+        from view.listContainersPage import ListRunningContainersPage
+
+        self.window.destroy()
+        ListRunningContainersPage(self.root)

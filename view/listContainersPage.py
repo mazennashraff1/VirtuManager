@@ -74,11 +74,25 @@ class ListRunningContainersPage:
             ).grid(row=i + 1, column=4, padx=5)
 
     def run_container(self, id):
-        return
+        from view.runImagePage import RunDockerImagePage
+
+        # Get container details by ID
+        container = next(
+            (c for c in self.controller.list_running_containers() if c["ID"] == id),
+            None,
+        )
+        if container:
+            self.window.destroy()
+            RunDockerImagePage(self.window, container)
+        else:
+            messagebox.showerror("Error", "Container not found.")
 
     def stop_container(self, container_id):
-        result = self.controller.stop_container(container_id)
-        messagebox.showinfo("Stop Result", result)
+        res, msg = self.controller.stopContainer(container_id)
+        if res:
+            messagebox.showinfo(msg)
+        else:
+            messagebox.showerror(msg)
         self.refresh()
 
     def refresh(self):
