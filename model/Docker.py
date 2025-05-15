@@ -39,15 +39,15 @@ def pull_image(image_name: str):
         print(e.stderr if e.stderr else str(e))
 
 
-def create_dockerfile_interactive(path, base_image, app_file):
+def create_dockerfile_interactive(dockerfile_content,path, base_image, app_file):
 
-    dockerfile_content = f"""
-    FROM {base_image}
-    COPY . /app
-    WORKDIR /app
-    RUN pip install --no-cache-dir -r requirements.txt
-    CMD ["python", "{app_file}"]
-    """.strip()
+    # dockerfile_content = f"""
+    # FROM {base_image}
+    # COPY . /app
+    # WORKDIR /app
+    # RUN pip install --no-cache-dir -r requirements.txt
+    # CMD ["python", "{app_file}"]
+    # """.strip()
 
     os.makedirs(path, exist_ok=True)
     dockerfile_path = os.path.join(path, "Dockerfile")
@@ -65,6 +65,8 @@ def build_docker_image_interactive(path, tag):
         print(f"Docker image '{tag}' built successfully.")
     except subprocess.CalledProcessError as e:
         print("Error building Docker image:", e)
+
+
 
 
 
