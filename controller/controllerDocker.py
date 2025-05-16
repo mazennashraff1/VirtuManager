@@ -11,6 +11,7 @@ from model.Docker import (
     build_docker_image,
     list_all_containers,
     search_local_images,
+    delete_container,
 )
 
 
@@ -255,10 +256,12 @@ class DockerController:
         return delete_image(id)
 
     def searchImage(self, name):
-        print(search_local_images(name))
         res, data = search_local_images(name)
         if res:
             images = self._parseDockerImages(data[0])
             return res, images
         else:
             return res, []
+
+    def deleteContainer(self, id):
+        return delete_container(id)
