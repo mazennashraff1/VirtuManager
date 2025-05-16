@@ -10,6 +10,7 @@ from model.Docker import (
     create_dockerfile,
     build_docker_image,
     list_all_containers,
+    search_local_images,
 )
 
 
@@ -222,8 +223,11 @@ class DockerController:
 
     def getAllImages(self):
         res, output = list_all_images()
-        images = self._parseDockerImages(output)
-        return images
+        if res:
+            images = self._parseDockerImages(output)
+            return images
+        else:
+            return []
 
     def fetchDockerImages(self, query, pageSize=5):
         try:
@@ -249,3 +253,12 @@ class DockerController:
 
     def deleteImage(self, id):
         return delete_image(id)
+
+    def searchImage(self, name):
+        print(search_local_images(name))
+        res, data = search_local_images(name)
+        if res:
+            images = self._parseDockerImages(data[0])
+            return res, images
+        else:
+            return res, []

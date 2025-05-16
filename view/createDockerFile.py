@@ -40,6 +40,7 @@ class CreateDockerfilePage:
         add_sidebar_button(self.sidebar, "Run Docker Image", self.go_run_img)
         add_sidebar_button(self.sidebar, "List Docker Images", self.go_list_imgs)
         add_sidebar_button(self.sidebar, "List Docker Containers", self.go_list_conts)
+        add_sidebar_button(self.sidebar, "Search for Image", self.go_search_image)
 
         self.main_frame = ctk.CTkFrame(self.window, fg_color="#545454")
         self.main_frame.pack(side="right", fill="both", expand=True, padx=40, pady=30)
@@ -207,3 +208,9 @@ class CreateDockerfilePage:
 
         self.window.destroy()
         ListRunningContainersPage(self.root)
+
+    def go_search_image(self):
+        from view.searchDImagePage import SearchDockerImagePage
+
+        self.window.destroy()
+        SearchDockerImagePage(self.root)
