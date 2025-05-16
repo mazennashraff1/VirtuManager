@@ -2,6 +2,68 @@ import subprocess
 import os
 
 
+def run_image(image_name, container_name, host_port, container_port):
+    cmd = [
+        "docker",
+        "run",
+        "-d",
+        "--name",
+        container_name,
+        "-p",
+        f"{host_port}:{container_port}",
+        image_name,
+    ]
+    try:
+        print(cmd)
+        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+        return (
+            True,
+            f"Container '{container_name}' started successfully.\nID: {result.stdout.strip()}",
+        )
+    except subprocess.CalledProcessError as e:
+        return False, f"Failed to run container:\n{e.stderr.strip()}"
+
+def stop_container(id):
+    cmd = ["docker", "stop", id]
+
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+        print(f"✅ Container '{id}' stopped successfully.")
+        return True, result.stdout.strip()
+    except subprocess.CalledProcessError as e:
+        return False, f"Failed to stop container '{id}':", e.stderr.strip()
+
+def start_container(container_id_or_name):
+    cmd = [
+        "docker",
+        "start",
+        container_id_or_name,
+    ]
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+        return (
+            True,
+            f"Container '{container_id_or_name}' started successfully.\n{result.stdout.strip()}",
+        )
+    except subprocess.CalledProcessError as e:
+        return False, f"Failed to start container:\n{e.stderr.strip()}"
+
+
+def delete_image(image_name_or_id):
+    cmd = [
+        "docker",
+        "rmi",
+        image_name_or_id,
+    ]
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+        return (
+            True,
+            f"Image '{image_name_or_id}' deleted successfully.\n{result.stdout.strip()}",
+        )
+    except subprocess.CalledProcessError as e:
+        return False, f"Failed to delete image:\n{e.stderr.strip()}"
+
 def list_running_containers():
     cmd = ["docker", "ps"]
     try:
@@ -39,7 +101,7 @@ def pull_image(image_name: str):
         print(e.stderr if e.stderr else str(e))
 
 
-def create_dockerfile_interactive(dockerfile_content,path, base_image, app_file):
+def create_dockerfile(dockerfile_content,path, base_image, app_file):
 
     # dockerfile_content = f"""
     # FROM {base_image}
@@ -57,7 +119,7 @@ def create_dockerfile_interactive(dockerfile_content,path, base_image, app_file)
     print(f"Dockerfile created at {dockerfile_path}")
 
 
-def build_docker_image_interactive(path, tag):
+def build_docker_image(path, tag):
 
     cmd = ["docker", "build", "-t", tag, path]
     try:

@@ -25,6 +25,13 @@ def get_qemu_system_path():
 
     raise FileNotFoundError("qemu-system-x86_64.exe not found.")
 
+def is_process_running(pid):
+    try:
+        os.kill(pid, 0)
+        return True
+    except OSError:
+        return False
+
 
 def create_virtual_machine(disk_path, memory, cpu, iso):
     global vm_process
@@ -51,24 +58,29 @@ def create_virtual_machine(disk_path, memory, cpu, iso):
 
     try:
         vm_process = subprocess.Popen(cmd)
+        with open("vm.pid", "w") as f:
+            f.write(str(vm_process.pid))
         print(f"VM started with PID {vm_process.pid}")
     except Exception as e:
         print("Error launching VM:", e)
 
 
 def stop_virtual_machine():
-    global vm_process
-    if vm_process and vm_process.poll() is None:
-        print(f"Stopping VM with PID {vm_process.pid}...")
-        vm_process.terminate()
-        try:
-            vm_process.wait(timeout=10)
-            print("VM stopped successfully.")
-        except subprocess.TimeoutExpired:
-            print("VM did not shut down gracefully. Forcing termination...")
-            vm_process.kill()
-    else:
-        print("No running VM to stop.")
+    try:
+        with open("vm.pid", "r") as f:
+            pid = int(f.read())
+
+        print(f"Stopping VM with PID {pid}...")
+        os.kill(pid, signal.SIGTERM)
+
+        os.remove("vm.pid")
+        print("VM stopped successfully.")
+
+    except FileNotFoundError:
+        print("PID file not found. VM may not be running.")
+    except ProcessLookupError:
+        print("No such process. VM may have already exited.")
+
 
 
 if __name__ == "__main__":
@@ -76,8 +88,8 @@ if __name__ == "__main__":
         "C:/Users/ahmed/OneDrive/Desktop/Learn/MSA/cloud/VirtuManager/test.qcow2",
         1024,
         2,
-        "C:/Users/ahmed/OneDrive/Desktop/Learn/MSA/cloud/VirtuManager/linuxmint-22-cinnamon-64bit.iso",
+        "C:/Users/ahmed/OneDrive/Desktop/Learn/MSA/cloud/linuxmint-22-cinnamon-64bit.iso",
     )
 
-    time.sleep(15)
+    time.sleep(10)
     stop_virtual_machine()
