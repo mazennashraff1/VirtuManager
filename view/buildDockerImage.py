@@ -2,6 +2,8 @@ import tkinter as tk
 import customtkinter as ctk
 from tkinter import filedialog, messagebox
 from controller.controllerDocker import DockerController
+import threading
+import time
 
 
 def add_sidebar_button(parent, text, command, disabled=False):
@@ -46,6 +48,9 @@ class BuildDockerImagePage:
         self.image_tag = self.add_input("Image Tag")
         self.dockerfile_path = self.add_input("Path to Dockerfile", self.browse_file)
         self.build_path = self.add_input("Build Path", self.browse_path)
+
+        self.progress_bar = ctk.CTkProgressBar(self.main_frame, width=400)
+        self.progress_bar.set(0)
 
         self.add_buttons(self.build_image, self.back, "Build", "Back")
 
@@ -106,14 +111,38 @@ class BuildDockerImagePage:
         dockerfile = self.dockerfile_path.get()
         build_dir = self.build_path.get()
 
-        success, message = self.controller.buildDockerImage(
-            name, tag, dockerfile, build_dir
-        )
+        # Show and reset progress bar
+        self.progress_bar.pack(pady=10)
+        self.progress_bar.set(0)
 
-        if success:
-            messagebox.showinfo("Success", message)
-        else:
-            messagebox.showerror("Build Failed", message)
+        def run_build():
+            # Simulate progress while building
+            progress = 0.0
+            while progress < 0.95:
+                progress += 0.01
+                try:
+                    self.window.after(0, lambda p=progress: self.progress_bar.set(p))
+                    time.sleep(0.05)
+                except:
+                    break
+
+            success, message = self.controller.buildDockerImage(
+                name, tag, dockerfile, build_dir
+            )
+
+            # Set progress to 100%
+            self.window.after(0, lambda: self.progress_bar.set(1.0))
+            time.sleep(0.5)
+            self.window.after(0, self.progress_bar.pack_forget)
+
+            if success:
+                self.window.after(0, lambda: messagebox.showinfo("Success", message))
+            else:
+                self.window.after(
+                    0, lambda: messagebox.showerror("Build Failed", message)
+                )
+
+        threading.Thread(target=run_build, daemon=True).start()
 
     def back(self):
         self.window.destroy()

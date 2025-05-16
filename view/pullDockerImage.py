@@ -2,6 +2,8 @@ import tkinter as tk
 import customtkinter as ctk
 from tkinter import messagebox
 from controller.controllerDocker import DockerController
+import threading
+import time
 
 
 def add_sidebar_button(parent, text, command, disabled=False):
@@ -64,7 +66,8 @@ class DockerImagePullPage:
             scrollbar_button_color="#5a5a5a",
         )
         self.description_text.pack(anchor="w", pady=10)
-        self.description_text.configure(state="disabled")  # Make it read-only
+        self.description_text.configure(state="disabled")
+
         self.pull_button = ctk.CTkButton(
             self.main_frame,
             text="Pull Selected Image",
@@ -75,6 +78,10 @@ class DockerImagePullPage:
             width=200,
         )
         self.pull_button.pack(pady=10)
+
+        # Progress bar setup (initially hidden)
+        self.progress_bar = ctk.CTkProgressBar(self.main_frame, width=400)
+        self.progress_bar.set(0)
 
         self.image_data_map = {}
 
@@ -93,16 +100,11 @@ class DockerImagePullPage:
         self.suggestions_list.delete(0, tk.END)
         self.image_data_map = {}
 
-        if not results:
-            print("No results found.")
-        else:
-            for image in results:
-                repo_name = image.get("repo_name")
-                if not repo_name:
-                    continue
-                full_name = repo_name
-                self.image_data_map[full_name] = image
-                self.suggestions_list.insert(tk.END, full_name)
+        for image in results:
+            repo_name = image.get("repo_name")
+            if repo_name:
+                self.image_data_map[repo_name] = image
+                self.suggestions_list.insert(tk.END, repo_name)
 
     def show_image_details(self, event):
         try:
@@ -141,12 +143,37 @@ class DockerImagePullPage:
             if not selection:
                 return
             selected = self.suggestions_list.get(selection[0])
-            if selected:
+            if not selected:
+                return
+
+            self.progress_bar.pack(pady=(0, 10))
+            self.progress_bar.set(0)
+
+            def do_pull():
+                progress = 0.0
+                while progress < 0.95:
+                    progress += 0.01
+                    try:
+                        self.window.after(
+                            0, lambda p=progress: self.progress_bar.set(p)
+                        )
+                        time.sleep(0.05)
+                    except:
+                        break
+
                 res, msg = self.controller.pullDockerImage(selected)
+
+                self.window.after(0, lambda: self.progress_bar.set(1.0))
+                time.sleep(0.5)
+                self.window.after(0, self.progress_bar.pack_forget)
+
                 if res:
-                    messagebox.showinfo("Success", msg)
+                    self.window.after(0, lambda: messagebox.showinfo("Success", msg))
                 else:
-                    messagebox.showerror("Error", msg)
+                    self.window.after(0, lambda: messagebox.showerror("Error", msg))
+
+            threading.Thread(target=do_pull, daemon=True).start()
+
         except Exception as e:
             messagebox.showerror("Error", f"Unexpected error: {str(e)}")
 

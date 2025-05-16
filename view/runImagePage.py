@@ -2,6 +2,8 @@ import tkinter as tk
 import customtkinter as ctk
 from tkinter import messagebox
 from controller.controllerDocker import DockerController
+import threading
+import time
 
 
 def add_sidebar_button(parent, text, command, disabled=False):
@@ -86,14 +88,20 @@ class RunDockerImagePage:
         self.container_port_entry.pack(anchor="w", pady=6)
         self.container_port_entry.insert(0, "80")  # default
 
-        # Bottom frame for the Run button, fixed height
+        # Progress bar (initially hidden)
+        self.progress_bar = ctk.CTkProgressBar(self.main_frame, width=400)
+        self.progress_bar.set(0)
+        self.progress_bar.pack(pady=(10, 0))
+        self.progress_bar.pack_forget()
+
+        # Bottom frame for the Run button
         self.bottom_frame = ctk.CTkFrame(
             self.right_container, fg_color="#545454", height=60
         )
         self.bottom_frame.pack(side="bottom", fill="x", padx=40, pady=(0, 20))
-        self.bottom_frame.pack_propagate(False)  # Prevent shrinking
+        self.bottom_frame.pack_propagate(False)
 
-        # Run button centered inside bottom frame
+        # Run button
         ctk.CTkButton(
             self.bottom_frame,
             text="Run Image",
@@ -107,17 +115,13 @@ class RunDockerImagePage:
         if container:
             self.fill_fields(container)
 
-        # Protocol to handle window closing (to restore parent window)
         self.window.protocol("WM_DELETE_WINDOW", self.on_close)
 
     def fill_fields(self, container):
         self.image_name_entry.delete(0, tk.END)
         self.image_name_entry.insert(0, container.get("Image", ""))
-
         self.image_tag_entry.delete(0, tk.END)
         self.image_tag_entry.insert(0, container.get("Tag", ""))
-
-        # Container name optional: you can pre-fill with container name or leave blank
         self.container_name_entry.delete(0, tk.END)
         self.container_name_entry.insert(0, container.get("Name", ""))
 
@@ -138,25 +142,39 @@ class RunDockerImagePage:
             )
             return
 
-        # Auto-generate container name if empty
         if not container_name:
             container_name = (
                 f"{image_name.replace(':', '_').replace('/', '_')}_container"
             )
 
-        # Call the controller to run the container
-        success, message = self.controller.runDockerImage(
-            image_name,
-            image_tag,
-            container_name,
-            host_port,
-            container_port,
-        )
+        self.progress_bar.set(0.0)
+        self.progress_bar.pack(pady=(10, 0))
 
-        if success:
-            messagebox.showinfo("Success", message)
-        else:
-            messagebox.showerror("Error", message)
+        def run_docker():
+            success, message = self.controller.runDockerImage(
+                image_name,
+                image_tag,
+                container_name,
+                host_port,
+                container_port,
+            )
+            self.progress_bar.set(1.0)
+            time.sleep(0.5)
+            self.progress_bar.pack_forget()
+            if success:
+                messagebox.showinfo("Success", message)
+            else:
+                messagebox.showerror("Error", message)
+
+        def update_progress():
+            progress = 0.0
+            while threading.active_count() > 2 and progress < 0.95:
+                progress += 0.01
+                self.progress_bar.set(progress)
+                time.sleep(0.1)
+
+        threading.Thread(target=run_docker, daemon=True).start()
+        threading.Thread(target=update_progress, daemon=True).start()
 
     def go_home(self):
         self.window.destroy()

@@ -216,12 +216,12 @@ class DockerController:
         return build_docker_image(dockerFile, buildDir, imageTag)
 
     def getAllContainers(self):
-        output = list_all_containers()
+        res, output = list_all_containers()
         containers = self._parseDockerList(output)
         return containers
 
     def getAllImages(self):
-        output = list_all_images()
+        res, output = list_all_images()
         images = self._parseDockerImages(output)
         return images
 
