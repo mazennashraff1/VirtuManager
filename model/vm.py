@@ -31,13 +31,20 @@ def create_virtual_machine(disk_path, memory, cpu, iso):
     qemu_system_path = get_qemu_system_path()
     cmd = [
         qemu_system_path,
-        "-hda", disk_path,
-        "-m", str(memory),
-        "-smp", str(cpu),
-        "-cdrom", iso,
-        "-boot", "d",
-        "-cpu", "qemu64",
-        "-display", "default"
+        "-hda",
+        disk_path,
+        "-m",
+        str(memory),
+        "-smp",
+        str(cpu),
+        "-cdrom",
+        iso,
+        "-boot",
+        "d",
+        "-cpu",
+        "qemu64",
+        "-display",
+        "default",
     ]
 
     print("Running command:", " ".join(cmd))
@@ -53,7 +60,7 @@ def stop_virtual_machine():
     global vm_process
     if vm_process and vm_process.poll() is None:
         print(f"Stopping VM with PID {vm_process.pid}...")
-        vm_process.terminate()  
+        vm_process.terminate()
         try:
             vm_process.wait(timeout=10)
             print("VM stopped successfully.")
@@ -69,8 +76,8 @@ if __name__ == "__main__":
         "C:/Users/ahmed/OneDrive/Desktop/Learn/MSA/cloud/VirtuManager/test.qcow2",
         1024,
         2,
-        "C:/Users/ahmed/OneDrive/Desktop/Learn/MSA/cloud/VirtuManager/linuxmint-22-cinnamon-64bit.iso"
+        "C:/Users/ahmed/OneDrive/Desktop/Learn/MSA/cloud/VirtuManager/linuxmint-22-cinnamon-64bit.iso",
     )
 
-    time.sleep(15)  
+    time.sleep(15)
     stop_virtual_machine()

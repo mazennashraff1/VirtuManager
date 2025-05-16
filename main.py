@@ -6,7 +6,7 @@ import customtkinter as ctk
 from customtkinter import CTkImage
 from view.vdPage import CreateVirtualDiskPage
 from view.vmPage import CreateVirtualMachinePage
-from view.dockerPage import DockerImagePullPage
+from view.createDockerFile import CreateDockerfilePage
 
 # Data for virtual machines
 orders_data = [
@@ -39,7 +39,7 @@ def open_vm_window(name, home_root):
     elif name.lower() == "virtual machine":
         page = CreateVirtualMachinePage(home_root)
     elif name.lower() == "docker":
-        page = DockerImagePullPage(home_root)
+        page = CreateDockerfilePage(root=home_root)
 
     def on_close():
         page.window.destroy()
