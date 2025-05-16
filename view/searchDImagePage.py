@@ -7,45 +7,54 @@ class SearchDockerImagePage:
     def __init__(self, root):
         self.root = root
         self.controller = DockerController()
-        self.window = ctk.CTkToplevel(fg_color="#545454")
+        self.window = ctk.CTkToplevel(fg_color="#1e1e1e")
         self.window.title("Search Docker Image")
-        self.window.geometry("900x500")
+        self.window.geometry("880x540")
 
-        ctk.CTkLabel(
-            self.window,
-            text="🔍 Search for a Docker Image",
-            font=("Segoe UI", 20, "bold"),
-            text_color="white"
-        ).pack(pady=20)
-
-        self.search_entry = ctk.CTkEntry(
-            self.window,
-            placeholder_text="Enter image name (e.g., nginx)",
-            width=400
-        )
-        self.search_entry.pack(pady=10)
-
+        # --- Back Button Only ---
         ctk.CTkButton(
             self.window,
+            text="← Back",
+            command=self.go_back,
+            fg_color="#8a1f1f",
+            hover_color="#c0392b",
+            text_color="white",
+            corner_radius=8,
+            width=100,
+            height=35
+        ).pack(anchor="nw", pady=15, padx=20)
+
+        # --- Main Section ---
+        self.main_frame = ctk.CTkFrame(self.window, fg_color="#1e1e1e")
+        self.main_frame.pack(fill="both", expand=True, padx=50, pady=10)
+
+        ctk.CTkLabel(
+            self.main_frame,
+            text="🔍 Search for a Docker Image",
+            font=("Segoe UI", 22, "bold"),
+            text_color="white"
+        ).pack(anchor="w", pady=(0, 15))
+
+        self.search_entry = ctk.CTkEntry(
+            self.main_frame,
+            placeholder_text="Enter image name (e.g., nginx)",
+            width=460
+        )
+        self.search_entry.pack(anchor="w", pady=5)
+
+        ctk.CTkButton(
+            self.main_frame,
             text="Search",
             command=self.perform_search,
             fg_color="#007bff",
+            hover_color="#0056b3",
             text_color="white",
-            width=150
-        ).pack(pady=10)
+            width=140,
+            font=ctk.CTkFont(size=12, weight="bold")
+        ).pack(anchor="w", pady=12)
 
-        self.result_frame = ctk.CTkFrame(self.window, fg_color="#3a3a3a")
-        self.result_frame.pack(fill="both", expand=True, padx=20, pady=20)
-
-        ctk.CTkButton(
-            self.window,
-            text="Back",
-            command=self.go_back,
-            fg_color="#444",
-            hover_color="#222",
-            text_color="white",
-            width=100
-        ).pack(anchor="w", padx=20, pady=10)
+        self.result_frame = ctk.CTkFrame(self.main_frame, fg_color="#2e2e2e", corner_radius=8)
+        self.result_frame.pack(fill="both", expand=True, pady=20)
 
     def perform_search(self):
         for widget in self.result_frame.winfo_children():
@@ -63,70 +72,68 @@ class SearchDockerImagePage:
             return
 
         if len(images) == 0:
-            ctk.CTkLabel(self.result_frame, text="No images found.", text_color="white").pack(pady=10)
+            ctk.CTkLabel(
+                self.result_frame,
+                text="⚠️ No images found.",
+                text_color="white",
+                font=ctk.CTkFont(size=14)
+            ).pack(pady=10)
             return
 
-        # Only show the first matched result
-        img = images[0]  # Take the first match
+        img = images[0]  # First match only
 
         ctk.CTkLabel(
             self.result_frame,
             text=f"🖼 Repository: {img['Repository']}",
             text_color="white",
-            font=("Segoe UI", 16)
-        ).pack(anchor="w", pady=5)
-        ctk.CTkLabel(
-            self.result_frame,
-            text=f"🔖 Tag: {img['Tag']}",
-            text_color="white"
-        ).pack(anchor="w", pady=5)
-        ctk.CTkLabel(
-            self.result_frame,
-            text=f"🆔 Image ID: {img['ImageID']}",
-            text_color="white"
-        ).pack(anchor="w", pady=5)
-        ctk.CTkLabel(
-            self.result_frame,
-            text=f"📅 Created: {img['Created']}",
-            text_color="white"
-        ).pack(anchor="w", pady=5)
-        ctk.CTkLabel(
-            self.result_frame,
-            text=f"📦 Size: {img['Size']}",
-            text_color="white"
-        ).pack(anchor="w", pady=5)
+            font=("Segoe UI", 16, "bold")
+        ).pack(anchor="w", pady=8, padx=20)
 
-        # Buttons Frame
-        btn_frame = ctk.CTkFrame(self.result_frame, fg_color="#3a3a3a")
-        btn_frame.pack(pady=20)
+        for label, icon in [
+            (f"🔖 Tag: {img['Tag']}", 5),
+            (f"🆔 Image ID: {img['ImageID']}", 5),
+            (f"📅 Created: {img['Created']}", 5),
+            (f"📦 Size: {img['Size']}", 10)
+        ]:
+            ctk.CTkLabel(
+                self.result_frame,
+                text=label,
+                text_color="white",
+                font=("Segoe UI", 13)
+            ).pack(anchor="w", pady=(icon, 0), padx=20)
+
+        # Buttons
+        btn_frame = ctk.CTkFrame(self.result_frame, fg_color="#2e2e2e")
+        btn_frame.pack(pady=25)
 
         full_name = f"{img['Repository']}:{img['Tag']}"
 
-        # Run Button
         ctk.CTkButton(
             btn_frame,
-            text="Run",
+            text="▶ Run",
             fg_color="#28a745",
+            hover_color="#218838",
             text_color="white",
-            width=100,
+            width=120,
+            font=ctk.CTkFont(size=13, weight="bold"),
             command=lambda: self.run_image(img['Repository'], img['Tag'])
-        ).pack(side="left", padx=10)
+        ).pack(side="left", padx=15)
 
-        # Delete Button
         ctk.CTkButton(
             btn_frame,
-            text="Delete",
-            fg_color="red",
+            text="🗑 Delete",
+            fg_color="#dc3545",
+            hover_color="#b02a37",
             text_color="white",
-            width=100,
+            width=120,
+            font=ctk.CTkFont(size=13, weight="bold"),
             command=lambda: self.delete_image(img["ImageID"])
-        ).pack(side="left", padx=10)
+        ).pack(side="left", padx=15)
 
     def run_image(self, name, tag):
         from view.runImagePage import RunDockerImagePage
         self.window.after(100, self.window.destroy)
         RunDockerImagePage(self.root, {"Image": name, "Tag": tag})
-
 
     def delete_image(self, full_name):
         confirm = messagebox.askyesno("Confirm Deletion", f"Are you sure you want to delete {full_name}?")
@@ -142,5 +149,6 @@ class SearchDockerImagePage:
             messagebox.showerror("Error", message)
 
     def go_back(self):
-        self.window.after(100, self.window.destroy)
-        self.root.deiconify()
+        self.window.destroy()
+        from view.createDockerFile import CreateDockerfilePage
+        CreateDockerfilePage(self.root)

@@ -8,42 +8,60 @@ class ListDockerImagesPage:
     def __init__(self, root):
         self.controller = DockerController()
         self.root = root
-        self.window = ctk.CTkToplevel(fg_color="#545454")
+        self.window = ctk.CTkToplevel(fg_color="#1e1e1e")
         self.window.title("List Docker Images")
-        self.window.geometry("900x500")
+        self.window.geometry("700x400")
 
-        # Back button
-        self.back_button = ctk.CTkButton(
+        # Back Button
+        ctk.CTkButton(
             self.window,
-            text="Back",
+            text="← Back",
             command=self.go_back,
-            fg_color="#004aad",
-            hover_color="#003180",
+            fg_color="#8a1f1f",
+            hover_color="#c0392b",
             text_color="white",
+            corner_radius=8,
             width=100,
-        )
-        self.back_button.pack(anchor="nw", padx=20, pady=10)
+            height=35
+        ).pack(anchor="nw", pady=15, padx=20)
 
+        # Title
         ctk.CTkLabel(
             self.window,
             text="📦 Docker Images",
-            font=("Segoe UI", 20, "bold"),
-            text_color="white",
-        ).pack(anchor="w", padx=20, pady=10)
+            font=ctk.CTkFont(size=22, weight="bold"),
+            text_color="white"
+        ).pack(anchor="w", padx=30, pady=(0, 10))
 
-        self.image_frame = tk.Frame(self.window, bg="#545454")
-        self.image_frame.pack(fill="both", expand=True, padx=20)
+        # --- Scrollable Frame Setup ---
+        container = ctk.CTkFrame(self.window, fg_color="#1e1e1e")
+        container.pack(fill="both", expand=True, padx=20, pady=10)
 
+        canvas = tk.Canvas(container, bg="#1e1e1e", highlightthickness=0)
+        scrollbar = ctk.CTkScrollbar(container, orientation="vertical", command=canvas.yview)
+        self.scroll_frame = ctk.CTkFrame(canvas, fg_color="#1e1e1e")
+
+        self.scroll_frame.bind(
+            "<Configure>",
+            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+        )
+
+        canvas.create_window((0, 0), window=self.scroll_frame, anchor="nw")
+        canvas.configure(yscrollcommand=scrollbar.set)
+
+        canvas.pack(side="left", fill="both", expand=True)
+        scrollbar.pack(side="right", fill="y")
+
+        # Table Headers
         headers = ["Repository", "Tag", "ImageID", "Created", "Size", "Action"]
         for i, header in enumerate(headers):
-            tk.Label(
-                self.image_frame,
+            ctk.CTkLabel(
+                self.scroll_frame,
                 text=header,
-                font=("Segoe UI", 10, "bold"),
-                bg="#545454",
-                fg="white",
-                padx=5,
-            ).grid(row=0, column=i, sticky="w")
+                text_color="#cccccc",
+                font=ctk.CTkFont(size=12, weight="bold"),
+                anchor="w"
+            ).grid(row=0, column=i, padx=10, pady=10, sticky="w")
 
         self.load_images()
 
@@ -51,67 +69,61 @@ class ListDockerImagesPage:
         images = self.controller.getAllImages()
 
         for i, img in enumerate(images):
-            row_index = i + 1
-            pady = 10
+            row = i + 1
+            padding = {"padx": 10, "pady": 5}
 
-            tk.Label(
-                self.image_frame, text=img["Repository"], bg="#545454", fg="white"
-            ).grid(row=row_index, column=0, sticky="w", padx=5, pady=pady)
-            tk.Label(self.image_frame, text=img["Tag"], bg="#545454", fg="white").grid(
-                row=row_index, column=1, sticky="w", padx=5, pady=pady
-            )
-            tk.Label(
-                self.image_frame, text=img["ImageID"], bg="#545454", fg="white"
-            ).grid(row=row_index, column=2, sticky="w", padx=5, pady=pady)
-            tk.Label(
-                self.image_frame, text=img["Created"], bg="#545454", fg="white"
-            ).grid(row=row_index, column=3, sticky="w", padx=5, pady=pady)
-            tk.Label(self.image_frame, text=img["Size"], bg="#545454", fg="white").grid(
-                row=row_index, column=4, sticky="w", padx=5, pady=pady
-            )
+            ctk.CTkLabel(self.scroll_frame, text=img["Repository"], text_color="white").grid(row=row, column=0, **padding, sticky="w")
+            ctk.CTkLabel(self.scroll_frame, text=img["Tag"], text_color="white").grid(row=row, column=1, **padding, sticky="w")
+            ctk.CTkLabel(self.scroll_frame, text=img["ImageID"], text_color="white").grid(row=row, column=2, **padding, sticky="w")
+            ctk.CTkLabel(self.scroll_frame, text=img["Created"], text_color="white").grid(row=row, column=3, **padding, sticky="w")
+            ctk.CTkLabel(self.scroll_frame, text=img["Size"], text_color="white").grid(row=row, column=4, **padding, sticky="w")
 
-            button_frame = tk.Frame(self.image_frame, bg="#545454")
-            button_frame.grid(row=row_index, column=5, padx=5, pady=pady)
+            # Actions
+            btn_frame = ctk.CTkFrame(self.scroll_frame, fg_color="transparent")
+            btn_frame.grid(row=row, column=5, padx=10, pady=5)
 
             # Run button
             ctk.CTkButton(
-                button_frame,
-                text="Run",
+                btn_frame,
+                text="▶ Run",
                 width=80,
-                command=lambda n=img["Repository"], t=img["Tag"]: self.run_image(n, t),
-            ).pack(pady=(0, 5))
+                fg_color="#1f8a53",
+                hover_color="#27ae60",
+                text_color="white",
+                command=lambda n=img["Repository"], t=img["Tag"]: self.run_image(n, t)
+            ).pack(side="left", padx=5)
 
             # Delete button
             ctk.CTkButton(
-                button_frame,
-                text="Delete",
+                btn_frame,
+                text="🗑 Delete",
                 width=80,
-                command=lambda id=img["ImageID"]: self.delete_image(id),
-            ).pack()
+                fg_color="#8a1f1f",
+                hover_color="#c0392b",
+                text_color="white",
+                command=lambda id=img["ImageID"]: self.delete_image(id)
+            ).pack(side="left", padx=5)
 
     def delete_image(self, id):
         res, msg = self.controller.deleteImage(id)
         if res:
-            messagebox.showinfo(msg)
+            messagebox.showinfo("Success", msg)
         else:
-            messagebox.showerror(msg)
+            messagebox.showerror("Error", msg)
         self.refresh()
 
     def run_image(self, name, tag):
         from view.runImagePage import RunDockerImagePage
-
-        cont = {
-            "Image": name,
-            "Tag": tag,
-        }
+        cont = {"Image": name, "Tag": tag}
         self.window.destroy()
         RunDockerImagePage(self.root, cont)
 
     def refresh(self):
-        for widget in self.image_frame.winfo_children():
+        for widget in self.scroll_frame.winfo_children():
             widget.destroy()
         self.load_images()
 
     def go_back(self):
         self.window.destroy()
-        self.root.deiconify()
+        from view.createDockerFile import CreateDockerfilePage
+        CreateDockerfilePage(self.root)

@@ -3,118 +3,100 @@ import customtkinter as ctk
 from tkinter import filedialog
 import tkinter.messagebox as messagebox
 from controller.controllerVD import VirtualDiskController
-
-
-def add_sidebar_button(parent, text, command, disabled=False):
-    state = "disabled" if disabled else "normal"
-    ctk.CTkButton(
-        parent,
-        text=text,
-        command=command,
-        state=state,
-        corner_radius=10,
-        fg_color="#545454",
-        text_color="white",
-        hover_color="#444444",
-        height=40,
-    ).pack(fill="x", pady=6, padx=10)
+from view.listVDPage import ListVirtualDisksPage
 
 
 class CreateVirtualDiskPage:
     def __init__(self, root, disk_data=None):
         self.root = root
-        self.disk_data = disk_data  # Contains disk details if in edit mode
-        self.window = ctk.CTkToplevel(fg_color="#545454")
+        self.disk_data = disk_data
+        self.window = ctk.CTkToplevel(fg_color="#1e1e1e")
         self.window.title("Create Virtual Disk")
-        self.window.geometry("800x500")
+        self.window.geometry("820x520")
 
-        self.sidebar = ctk.CTkFrame(self.window, width=160, fg_color="white")
-        self.sidebar.pack(side="left", fill="y")
-        add_sidebar_button(self.sidebar, "Home", self.go_home)
-        add_sidebar_button(self.sidebar, "Create Disk", None, disabled=True)
-        add_sidebar_button(self.sidebar, "List All VDs", self.go_list_vd)
-        add_sidebar_button(self.sidebar, "Create VM", self.go_vm)
+        # --- Top Navigation Bar ---
+        navbar = ctk.CTkFrame(self.window, fg_color="#1a1a1a", height=80)
+        navbar.pack(fill="x", side="top")
 
-        self.main_frame = ctk.CTkFrame(self.window, fg_color="#545454")
-        self.main_frame.pack(side="right", fill="both", expand=True, padx=40, pady=30)
+        # --- Left Buttons ---
+        left_buttons = [
+            {"icon": "🏠", "label": "Home", "command": self.go_home},
+            {"icon": "📋", "label": "List", "command": self.go_list_vd},
+        ]
+        for btn in left_buttons:
+            frame = ctk.CTkFrame(navbar, fg_color="transparent")
+            frame.pack(side="left", padx=16, pady=10)
+            ctk.CTkLabel(frame, text=btn["icon"], font=ctk.CTkFont(size=22), text_color="#cccccc").pack()
+            ctk.CTkButton(
+                frame, text=btn["label"], command=btn["command"],
+                fg_color="transparent", hover_color="#5c1e1e", text_color="#cccccc",
+                font=ctk.CTkFont(size=14, weight="bold"), width=80, height=32
+            ).pack()
+
+        # --- Spacer & Active Button Right ---
+        ctk.CTkLabel(navbar, text="", width=400).pack(side="left", expand=True)
+        create_frame = ctk.CTkFrame(navbar, fg_color="#2a2a2a", corner_radius=10)
+        create_frame.pack(side="right", padx=16, pady=10)
+        ctk.CTkLabel(create_frame, text="💽", font=ctk.CTkFont(size=24), text_color="#ff4c4c").pack()
+        ctk.CTkLabel(create_frame, text=" Create VD ", font=ctk.CTkFont(size=14, weight="bold"), text_color="#ff4c4c").pack()
+
+        # --- Main Form Frame ---
+        self.main_frame = ctk.CTkFrame(self.window, fg_color="#1e1e1e")
+        self.main_frame.pack(expand=True, pady=30)
 
         ctk.CTkLabel(
             self.main_frame,
             text="Create Virtual Disk" if not self.disk_data else "Edit Virtual Disk",
-            font=("Segoe UI", 20, "bold"),
+            font=("Segoe UI", 22, "bold"),
             text_color="white",
-        ).pack(anchor="w", pady=(0, 20))
+        ).grid(row=0, column=0, columnspan=3, pady=(0, 20))
 
-        self.disk_path = self.add_input("Disk Path", self.browse_path)
-        self.file_name = self.add_input("File Name")
-        self.disk_format = self.add_combobox(
-            "Disk Format",
-            ["qcow2", "vmdk", "vdi", "raw", "vhd"],
-        )
-        self.disk_size = self.add_input("Disk Size (GB)", default="1")
+        # --- Disk Path ---
+        ctk.CTkLabel(self.main_frame, text="📂 Disk Path:", text_color="white", anchor="w").grid(row=1, column=0, padx=10, pady=8, sticky="e")
+        self.disk_path = ctk.CTkEntry(self.main_frame, width=320)
+        self.disk_path.grid(row=1, column=1, padx=10, pady=8)
+        ctk.CTkButton(
+            self.main_frame, text="Browse", command=self.browse_path,
+            width=80, fg_color="#004aad", hover_color="#3c5a94", text_color="white"
+        ).grid(row=1, column=2, padx=10, pady=8)
 
-        if self.disk_data:  # If editing an existing disk, populate the fields
+        # --- File Name ---
+        ctk.CTkLabel(self.main_frame, text="📝 File Name:", text_color="white", anchor="w").grid(row=2, column=0, padx=10, pady=8, sticky="e")
+        self.file_name = ctk.CTkEntry(self.main_frame, width=320)
+        self.file_name.grid(row=2, column=1, columnspan=2, padx=10, pady=8, sticky="w")
+
+        # --- Format ---
+        ctk.CTkLabel(self.main_frame, text="📦 Format:", text_color="white", anchor="w").grid(row=3, column=0, padx=10, pady=8, sticky="e")
+        self.disk_format = ctk.CTkComboBox(self.main_frame, values=["qcow2", "vmdk", "vdi", "raw", "vhd"], width=320)
+        self.disk_format.grid(row=3, column=1, columnspan=2, padx=10, pady=8, sticky="w")
+
+        # --- Size ---
+        ctk.CTkLabel(self.main_frame, text="💾 Size (GB):", text_color="white", anchor="w").grid(row=4, column=0, padx=10, pady=8, sticky="e")
+        self.disk_size = ctk.CTkEntry(self.main_frame, width=320)
+        self.disk_size.grid(row=4, column=1, columnspan=2, padx=10, pady=8, sticky="w")
+        self.disk_size.insert(0, "1")
+
+        # --- Prefill Data if Edit Mode ---
+        if self.disk_data:
             self.disk_path.insert(0, self.disk_data[0])
             self.file_name.insert(0, self.disk_data[1])
             self.disk_format.set(self.disk_data[2])
             self.disk_size.insert(0, self.disk_data[3])
 
-        self.add_button_row(
-            self.save_disk if self.disk_data else self.create_disk,
-            self.back,
-            "Save Disk" if self.disk_data else "Create Disk",
-            "Back",
-        )
-
-    def add_input(self, label, browse_command=None, default=""):
-        ctk.CTkLabel(self.main_frame, text=label, text_color="white").pack(anchor="w")
-        frame = ctk.CTkFrame(self.main_frame, fg_color="#545454")
-        frame.pack(anchor="w", fill="x", pady=6)
-        entry = ctk.CTkEntry(frame, width=320)
-        entry.insert(0, default)
-        entry.pack(side="left", padx=(0, 10))
-        if browse_command:
-            ctk.CTkButton(
-                frame,
-                text="Browse",
-                command=browse_command,
-                width=80,
-                fg_color="#004aad",
-                hover_color="#444444",
-                text_color="white",
-            ).pack(side="left")
-        return entry
-
-    def add_combobox(self, label, values):
-        ctk.CTkLabel(self.main_frame, text=label, text_color="white").pack(
-            anchor="w", pady=(10, 0)
-        )
-        cb = ctk.CTkComboBox(self.main_frame, values=values)
-        cb.pack(anchor="w", pady=6)
-        return cb
-
-    def add_button_row(self, confirm_cmd, cancel_cmd, confirm_text, cancel_text):
-        button_frame = ctk.CTkFrame(self.main_frame, fg_color="#545454")
-        button_frame.pack(anchor="center", pady=20)
+        # --- Buttons ---
+        confirm_text = "✅ Save Disk" if self.disk_data else "✅ Create Disk"
         ctk.CTkButton(
-            button_frame,
-            text=confirm_text,
-            command=confirm_cmd,
-            fg_color="red",
-            hover_color="#444444",
-            text_color="white",
-            width=120,
-        ).pack(side="left", padx=10)
-        ctk.CTkButton(
-            button_frame,
-            text=cancel_text,
-            command=cancel_cmd,
-            fg_color="red",
-            hover_color="#444444",
-            text_color="white",
-            width=120,
-        ).pack(side="left", padx=10)
+            self.main_frame, text=confirm_text,
+            command=self.save_disk if self.disk_data else self.create_disk,
+            fg_color="#1f8a53", hover_color="#27ae60", text_color="white", width=140
+        ).grid(row=5, column=1, padx=10, pady=30, sticky="e")
 
+        ctk.CTkButton(
+            self.main_frame, text="↩ Back", command=self.back,
+            fg_color="#8a1f1f", hover_color="#c0392b", text_color="white", width=140
+        ).grid(row=5, column=2, padx=10, pady=30, sticky="w")
+
+    # --- Utility Functions ---
     def browse_path(self):
         path = filedialog.askdirectory()
         if path:
@@ -133,8 +115,8 @@ class CreateVirtualDiskPage:
 
     def save_disk(self):
         controller = VirtualDiskController()
-        result = controller.updateVD(  # Assuming updateVD exists in your controller
-            self.disk_data[1],  # Original disk path or identifier
+        result = controller.updateVD(
+            self.disk_data[1],
             self.file_name.get(),
             self.disk_path.get(),
             self.disk_format.get(),
@@ -152,13 +134,11 @@ class CreateVirtualDiskPage:
         self.back()
 
     def go_vm(self):
-        from view.vmPage import CreateVirtualMachinePage
-
+        from vmPage import CreateVirtualMachinePage
         self.window.destroy()
         CreateVirtualMachinePage(self.root)
 
     def go_list_vd(self):
         from view.listVDPage import ListVirtualDisksPage
-
         self.window.destroy()
         ListVirtualDisksPage(self.root)

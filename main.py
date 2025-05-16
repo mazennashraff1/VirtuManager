@@ -52,71 +52,79 @@ def HomePage():
     root = ctk.CTk()
     root.title("Virtual Machines")
     root.geometry("1000x600")
+    ctk.set_appearance_mode("dark")
+    ctk.set_default_color_theme("blue")
 
-    bg_image_pil = Image.open(os.path.join("imgs", "all.png")).resize((1000, 600))
+    # Background image
+    bg_image_pil = Image.open(os.path.join("imgs", "newBK.png")).resize((1000, 600))
     root.bg_image = CTkImage(light_image=bg_image_pil, size=(1000, 600))
     bg_label = ctk.CTkLabel(root, image=root.bg_image, text="")
     bg_label.place(x=0, y=0, relwidth=1, relheight=1)
 
-    x_positions = [30, 200, 190, 190]
-    for i, order in enumerate(orders_data):
-        x = 134 + i * 433
-        x2 = 286 + i * 433
-        watch_color = "#fec801" if order[0] == "Virtual Machine" else "#004aad"
+    # Button styling
+    button_font = ctk.CTkFont(size=14, weight="bold")
 
+    for i, order in enumerate(orders_data):
+        x = 147 + i * 300
+        x2 = 205 + i * 303
+        is_vm = order[0].lower() == "virtual machine"
+        is_docker = order[0].lower() == "docker"
+
+       # Color sets per type
+        if order[0].lower() == "virtual disk":
+            start_color = "#e63946"
+            start_hover = "#ba1b1d"
+            watch_color = "#1d3557"
+            hover_watch = "#0d1b2a"
+        elif order[0].lower() == "virtual machine":
+            start_color = "#2a9d8f"
+            start_hover = "#21867a"
+            watch_color = "#e9c46a"
+            hover_watch = "#f4a261"
+        elif order[0].lower() == "docker":
+            start_color = "#264653"
+            start_hover = "#1f343f"
+            watch_color = "#00b4d8"
+            hover_watch = "#0077b6"
+
+
+        # Labels
+        start_label = (
+            "VD" if order[0].lower() == "virtual disk"
+            else "VM" if is_vm
+            else "DK"
+        )
+
+        # Watch Button
         ctk.CTkButton(
             root,
-            text="Watch",
+            text="▶ Watch",
+            font=button_font,
             command=lambda url=order[2]: open_demo(url),
             fg_color=watch_color,
-            hover_color="#e76f51",
+            hover_color=hover_watch,
             text_color="white",
-        ).place(x=x2, y=x_positions[2])
+            corner_radius=20,
+            width=80,
+            height=35,
+            bg_color="transparent"
+        ).place(x=x2 - 23, y=310)
 
-        start_label = "VD" if order[0].lower() == "virtual disk" else "VM"
+        # Start Button
         ctk.CTkButton(
             root,
             text=start_label,
+            font=button_font,
             command=lambda name=order[0]: open_vm_window(name, root),
-            fg_color="#ff3131",
-            hover_color="#21867a",
+            fg_color=start_color,
+            hover_color=start_hover,
             text_color="white",
-        ).place(x=x, y=x_positions[3])
+            corner_radius=20,
+            width=50,
+            height=35,
+            bg_color="transparent"
+        ).place(x=x - 20, y=310)
 
-    second_row_y = [515, 515]
-    for i, order in enumerate(orders_data):
-        x = 134 + i * 220
-        x2 = 286 + i * 220
-
-        watch_color = "#fec801" if order[0].lower() == "docker" else "#004aad"
-        if order[0].lower() == "docker":
-            watch_color = "#0db7ed"
-
-        start_label = (
-            "VD"
-            if order[0].lower() == "virtual disk"
-            else "VM" if order[0].lower() == "virtual machine" else "DK"
-        )
-
-    # Second row - Watch Button
-    ctk.CTkButton(
-        root,
-        text="Watch",
-        command=lambda url=order[2]: open_demo(url),
-        fg_color=watch_color,
-        hover_color="#e76f51",
-        text_color="white",
-    ).place(x=x2, y=second_row_y[0])
-
-    # Second row - Start Button
-    ctk.CTkButton(
-        root,
-        text=f"{start_label}",
-        command=lambda name=order[0]: open_vm_window(name, root),
-        fg_color="#ff3131",
-        hover_color="#21867a",
-        text_color="white",
-    ).place(x=x, y=second_row_y[1])
     root.mainloop()
 
 
