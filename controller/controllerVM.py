@@ -44,15 +44,15 @@ class VirtualMachineController:
             )
         return "No file or folder path provided.", False
 
-    def _saveVM(self, diskPath, RAM, CPU, isoPath):
+    def _saveVM(self, diskPath, RAM, CPU, isoPath, pid):
         fileName = "logs/allVM.txt"
         os.makedirs(os.path.dirname(fileName), exist_ok=True)
         fileExists = os.path.isfile(fileName)
 
         with open(fileName, "a") as f:
             if not fileExists:
-                f.write("ISO Path,Disk Path,RAM (GB),CPU (Cores)\n")
-            f.write(f"{diskPath},{RAM},{CPU},{isoPath}\n")
+                f.write("ISO Path,Disk Path,RAM (GB),CPU (Cores),PID\n")
+            f.write(f"{diskPath},{RAM},{CPU},{isoPath},{pid}\n")
 
     def readVMs(self):
         VMs = []
@@ -61,33 +61,38 @@ class VirtualMachineController:
             with open(fileName, "r") as f:
                 lines = f.readlines()[1:]
                 for line in lines:
-                    diskPath, RAM, CPU, isoPath = line.strip().split(",")
-                    VMs.append(
-                        {
-                            "ISO File": isoPath,
-                            "Disk Path": diskPath,
-                            "RAM (GB)": RAM,
-                            "CPU (Cores)": CPU,
-                        }
-                    )
+                    parts = line.strip().split(",")
+                    if len(parts) == 5:
+                        diskPath, RAM, CPU, isoPath, pid = parts
+                        VMs.append(
+                            {
+                                "ISO File": isoPath,
+                                "Disk Path": diskPath,
+                                "RAM (GB)": RAM,
+                                "CPU (Cores)": CPU,
+                            }
+                        )
         return VMs
 
     def callVM(self, diskPath, requiredRAM, requiredCPU, isoPath):
-        """Create a virtual machine if all system requirements (disk, RAM, CPU, ISO file) are met."""
         response = ""
         if diskPath != "" and requiredRAM != "" and requiredCPU != "" and isoPath != "":
             ext, disk = self._checkValidPath(
-                diskPath,
-                ["qcow2", "vmdk", "vdi", "raw", "vhd"],
+                diskPath, ["qcow2", "vmdk", "vdi", "raw", "vhd"]
             )
             ram = self._checkValidRAM(requiredRAM)
             cpu = self._checkValidCPU(requiredCPU)
             cext, iso = self._checkValidPath(isoPath, ["iso", "img"])
             if disk and ram == True and cpu == True and iso:
-                requiredRAM = str(int(requiredRAM) * 1024)
-                create_virtual_machine(diskPath, requiredRAM, requiredCPU, isoPath)
-                self._saveVM(diskPath, requiredRAM, requiredCPU, isoPath)
-                return "Creating VM Successfully"
+                requiredRAM_MB = str(int(requiredRAM) * 1024)
+                pid = create_virtual_machine(
+                    diskPath, requiredRAM_MB, requiredCPU, isoPath
+                )
+                if pid:
+                    self._saveVM(diskPath, requiredRAM, requiredCPU, isoPath, pid)
+                    return f"VM created successfully with PID: {pid}"
+                else:
+                    return "Failed to create VM."
             if not disk:
                 response += "Disk Path: " + ext + "\n"
             if ram != True:
@@ -98,4 +103,7 @@ class VirtualMachineController:
                 response += "ISO Path: " + cext + "\n"
             return response.strip()
         else:
-            return "Please Fill out all the information"
+            return "Please fill out all the information."
+
+    def closeVM(self, id):
+        return

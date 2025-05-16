@@ -63,25 +63,22 @@ def create_virtual_machine(disk_path, memory, cpu_cores, iso):
         with open("vm.pid", "w") as f:
             f.write(str(vm_process.pid))
         print(f"VM started with PID {vm_process.pid}")
+        return vm_process.pid
     except Exception as e:
         print("Error launching VM:", e)
 
 
-def stop_virtual_machine():
+def stop_virtual_machine(pid):
     try:
-        with open("vm.pid", "r") as f:
-            pid = int(f.read())
-
         print(f"Stopping VM with PID {pid}...")
-        os.kill(pid, signal.SIGTERM)
-
-        os.remove("vm.pid")
+        os.kill(int(pid), signal.SIGTERM)
         print("VM stopped successfully.")
-
-    except FileNotFoundError:
-        print("PID file not found. VM may not be running.")
     except ProcessLookupError:
         print("No such process. VM may have already exited.")
+    except PermissionError:
+        print("Permission denied. Try running with elevated privileges.")
+    except Exception as e:
+        print(f"Error stopping VM: {e}")
 
 
 if __name__ == "__main__":
