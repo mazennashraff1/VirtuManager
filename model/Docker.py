@@ -67,7 +67,35 @@ def build_docker_image_interactive(path, tag):
         print("Error building Docker image:", e)
 
 
+def search_local_images(query):
+    """
+    Searches for Docker images available locally that match a user-provided name or tag.
+    """
+    cmd = ["docker", "images", "--format", "{{.Repository}}:{{.Tag}} {{.ID}} {{.CreatedSince}} {{.Size}}"]
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+        lines = result.stdout.strip().split("\n")
+        matches = [line for line in lines if query.lower() in line.lower()]
+        if matches:
+            print("Matching local Docker images:")
+            for match in matches:
+                print(" -", match)
+        else:
+            print("No local images found matching:", query)
+    except subprocess.CalledProcessError as e:
+        print("Error retrieving local Docker images:", e.stderr or str(e))
 
+def search_dockerhub_images(query):
+    """
+    Searches DockerHub for public Docker images matching a user-provided query.
+    """
+    cmd = ["docker", "search", query]
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+        print("📦 DockerHub Search Results:\n")
+        print(result.stdout)
+    except subprocess.CalledProcessError as e:
+        print("Error using 'docker search':", e.stderr or str(e))
 
 
 if __name__ == "__main__":
@@ -75,4 +103,5 @@ if __name__ == "__main__":
 
     # build_docker_image("myapp", tag="my-python-app")
 
-    pull_image("ubuntu")
+    #pull_image("ubuntu")
+    search_dockerhub_images("nginx")
