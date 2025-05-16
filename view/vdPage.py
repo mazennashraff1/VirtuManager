@@ -3,7 +3,6 @@ import customtkinter as ctk
 from tkinter import filedialog
 import tkinter.messagebox as messagebox
 from controller.controllerVD import VirtualDiskController
-from view.listVDPage import ListVirtualDisksPage
 
 
 def add_sidebar_button(parent, text, command, disabled=False):
@@ -153,7 +152,7 @@ class CreateVirtualDiskPage:
         self.back()
 
     def go_vm(self):
-        from vmPage import CreateVirtualMachinePage
+        from view.vmPage import CreateVirtualMachinePage
 
         self.window.destroy()
         CreateVirtualMachinePage(self.root)

@@ -25,6 +25,7 @@ def get_qemu_system_path():
 
     raise FileNotFoundError("qemu-system-x86_64.exe not found.")
 
+
 def is_process_running(pid):
     try:
         os.kill(pid, 0)
@@ -33,25 +34,26 @@ def is_process_running(pid):
         return False
 
 
-def create_virtual_machine(disk_path, memory, cpu, iso):
+def create_virtual_machine(disk_path, memory, cpu_cores, iso):
     global vm_process
     qemu_system_path = get_qemu_system_path()
+
     cmd = [
         qemu_system_path,
-        "-hda",
-        disk_path,
         "-m",
-        str(memory),
-        "-smp",
-        str(cpu),
-        "-cdrom",
-        iso,
-        "-boot",
-        "d",
+        str(memory),  # Set RAM
         "-cpu",
-        "qemu64",
+        "max",  # Use all CPU features
+        "-smp",
+        str(cpu_cores),  # Set number of cores
+        "-hda",
+        disk_path,  # Disk image
+        "-cdrom",
+        iso,  # ISO file
+        "-boot",
+        "menu=on",  # Boot menu
         "-display",
-        "default",
+        "sdl",  # GUI window
     ]
 
     print("Running command:", " ".join(cmd))
@@ -80,7 +82,6 @@ def stop_virtual_machine():
         print("PID file not found. VM may not be running.")
     except ProcessLookupError:
         print("No such process. VM may have already exited.")
-
 
 
 if __name__ == "__main__":

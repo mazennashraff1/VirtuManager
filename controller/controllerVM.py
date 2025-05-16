@@ -84,6 +84,7 @@ class VirtualMachineController:
             cpu = self._checkValidCPU(requiredCPU)
             cext, iso = self._checkValidPath(isoPath, ["iso", "img"])
             if disk and ram == True and cpu == True and iso:
+                requiredRAM = str(int(requiredRAM) * 1024)
                 create_virtual_machine(diskPath, requiredRAM, requiredCPU, isoPath)
                 self._saveVM(diskPath, requiredRAM, requiredCPU, isoPath)
                 return "Creating VM Successfully"
