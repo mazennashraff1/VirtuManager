@@ -93,6 +93,23 @@ def delete_image(image_name_or_id):
         return False, f"Failed to delete image:\n{error_msg}"
 
 
+def delete_container(container_name_or_id):
+    cmd = [
+        "docker",
+        "rm",
+        container_name_or_id,
+    ]
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+        return (
+            True,
+            f"Container '{container_name_or_id}' deleted successfully.\n{result.stdout.strip()}",
+        )
+    except subprocess.CalledProcessError as e:
+        error_msg = e.stderr.strip() if e.stderr else str(e)
+        return False, f"Failed to delete container:\n{error_msg}"
+
+
 def pull_image(image_name: str):
     """
     Pulls a Docker image from DockerHub.
