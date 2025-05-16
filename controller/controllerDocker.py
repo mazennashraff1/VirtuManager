@@ -26,46 +26,53 @@ class DockerController:
             return False
 
     def _parseDockerList(self, output: str):
-        if output != "":
-            lines = output.strip().split("\n")
-            containers = []
+        lines = output.strip().split("\n")
+        containers = []
 
-            for line in lines:
-                parts = line.split()
-                print(parts)
-                statusStr = parts[2]
-                isRunning = statusStr.startswith("Up")
-                container = {
-                    "ID": parts[0],
-                    "Name": parts[1],
-                    "Status": parts[2],
-                    "Image": parts[-1],
-                    "Running": isRunning,
-                }
-                containers.append(container)
-
+        if len(lines) <= 0:
             return containers
-        return ""
+
+        for line in lines:
+            parts = line.split()
+
+            name = parts[0]
+            container_id = parts[1]
+            status = " ".join(parts[2:-1])
+            image = parts[-1]
+            is_running = status.startswith("Up")
+
+            container = {
+                "Name": name,
+                "ID": container_id,
+                "Status": status,
+                "Image": image,
+                "Running": is_running,
+            }
+            containers.append(container)
+
+        return containers
 
     def _parseDockerImages(self, output: str):
         lines = output.strip().split("\n")
         images = []
 
-        if len(lines) <= 1:
+        if len(lines) <= 0:
             return images
 
         # Skip header
-        for line in lines[1:]:
-            parts = line.split(maxsplit=4)
-            if len(parts) < 5:
-                continue
-
+        for line in lines:
+            parts = line.split()
+            nameID = parts[0]  # test:123
+            image_id = parts[1]  # de072b06a269
+            created = " ".join(parts[2:-1])  # About a minute ago
+            size = parts[-1]
+            name, tag = nameID.split(":")
             image = {
-                "Repository": parts[0],
-                "Tag": parts[1],
-                "ImageID": parts[2],
-                "Created": parts[3],
-                "Size": parts[4],
+                "Repository": name,
+                "Tag": tag,
+                "ImageID": image_id,
+                "Created": created,
+                "Size": size,
             }
             images.append(image)
 
@@ -151,7 +158,7 @@ class DockerController:
         with open(path, "r", encoding="utf-8") as f:
             return f.read().strip()
 
-    def saveEditedDockerFile(self, id, path, content, description):
+    def EditedDockerFile(self, id, path, content, description):
         if not path or not content:
             return False, "Both path and content are required."
 
@@ -166,7 +173,7 @@ class DockerController:
 
         path = path.replace("\\", "/")
         data = {"Path": path, "desc": description}
-        self._saveLog(data)
+        self._editLog(id, data)
 
         return response, msg
 
@@ -210,7 +217,6 @@ class DockerController:
 
     def getAllContainers(self):
         output = list_all_containers()
-        print(output)
         containers = self._parseDockerList(output)
         return containers
 
@@ -229,7 +235,7 @@ class DockerController:
             raise RuntimeError(f"Failed to fetch images: {str(e)}")
 
     def pullDockerImage(self, image: str) -> str:
-        pull_image(image)
+        return pull_image(image)
 
     def runDockerImage(self, imgName, imgTag, contName, hostPort, contPort):
         imgName = f"{imgName}:{imgTag}"
@@ -238,8 +244,8 @@ class DockerController:
     def startContainer(self, id):
         return start_container(id)
 
-    def stopContainer(id):
+    def stopContainer(self, id):
         return stop_container(id)
 
-    def deleteImage(id):
+    def deleteImage(self, id):
         return delete_image(id)

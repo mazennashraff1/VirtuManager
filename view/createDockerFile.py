@@ -147,7 +147,7 @@ class CreateDockerfilePage:
         content = self.content_textbox.get("1.0", "end").strip()
         description = self.description_entry.get().strip()
 
-        success, message = self.controller.saveEditedDockerFile(
+        success, message = self.controller.EditedDockerFile(
             self.id, path, content, description
         )
 

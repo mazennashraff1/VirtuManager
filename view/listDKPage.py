@@ -128,9 +128,9 @@ class ListDockerfilesPage:
                 self.scroll_frame,
                 text="Edit",
                 width=80,
-                command=lambda path=df["Path"], desc=df["desc"]: self.open_edit_page(
-                    path, desc
-                ),
+                command=lambda id=df["ID"], path=df["Path"], desc=df[
+                    "desc"
+                ]: self.open_edit_page(id, path, desc),
             )
             edit_button.grid(row=i, column=3, padx=5, pady=2)
 
@@ -145,12 +145,12 @@ class ListDockerfilesPage:
         # Make textbox read-only again
         self.textbox.configure(state="disabled")
 
-    def open_edit_page(self, path, desc):
+    def open_edit_page(self, id, path, desc):
         from view.createDockerFile import CreateDockerfilePage
 
         content = self.controller.getDockerFileContent(path)
         self.window.destroy()
 
         CreateDockerfilePage(
-            self.root, file_path=path, file_content=content, description=desc
+            self.root, id=id, file_path=path, file_content=content, description=desc
         )

@@ -78,7 +78,7 @@ class ListDockerImagesPage:
                 button_frame,
                 text="Run",
                 width=80,
-                command=lambda n=img["Repository"]: self.run_image(n),
+                command=lambda n=img["Repository"], t=img["Tag"]: self.run_image(n, t),
             ).pack(pady=(0, 5))
 
             # Delete button
@@ -97,12 +97,15 @@ class ListDockerImagesPage:
             messagebox.showerror(msg)
         self.refresh()
 
-    def run_image(self, name):
-        res, msg = self.controller.run_docker_image(name)
-        if res:
-            messagebox.showinfo(msg)
-        else:
-            messagebox.showerror(msg)
+    def run_image(self, name, tag):
+        from view.runImagePage import RunDockerImagePage
+
+        cont = {
+            "Image": name,
+            "Tag": tag,
+        }
+        self.window.destroy()
+        RunDockerImagePage(self.root, cont)
 
     def refresh(self):
         for widget in self.image_frame.winfo_children():

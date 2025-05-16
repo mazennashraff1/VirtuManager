@@ -32,9 +32,14 @@ class ListRunningContainersPage:
             text_color="white",
         ).pack(anchor="w", padx=20, pady=10)
 
-        self.container_frame = tk.Frame(self.window, bg="#545454")
+        self.container_frame = ctk.CTkFrame(self.window, fg_color="#545454")
         self.container_frame.pack(fill="both", expand=True, padx=20)
 
+        self.create_headers()
+
+        self.load_containers()
+
+    def create_headers(self):
         headers = ["ID", "Name", "Status", "Image", "Action"]
         for i, header in enumerate(headers):
             tk.Label(
@@ -45,8 +50,6 @@ class ListRunningContainersPage:
                 fg="white",
                 padx=5,
             ).grid(row=0, column=i, sticky="w")
-
-        self.load_containers()
 
     def load_containers(self):
         containers = self.controller.getAllContainers()
@@ -64,10 +67,9 @@ class ListRunningContainersPage:
                 self.container_frame, text=cont["Image"], bg="#545454", fg="white"
             ).grid(row=i + 1, column=3, sticky="w", padx=5)
             action_text = "Stop" if cont["Running"] else "Run"
-            action_command = lambda c_id=cont["ID"]: (
-                self.stop_container(c_id)
-                if cont["Running"]
-                else self.run_container(c_id)
+            is_running = cont["Running"]
+            action_command = lambda c_id=cont["ID"], running=is_running: (
+                self.stop_container(c_id) if running else self.run_container(c_id)
             )
             ctk.CTkButton(
                 self.container_frame, text=action_text, width=80, command=action_command
@@ -76,22 +78,23 @@ class ListRunningContainersPage:
     def run_container(self, id):
         res, msg = self.controller.startContainer(id)
         if res:
-            messagebox.showinfo(msg)
+            messagebox.showinfo("Info", msg)
         else:
-            messagebox.showerror(msg)
+            messagebox.showerror("Error", msg)
         self.refresh()
 
     def stop_container(self, container_id):
         res, msg = self.controller.stopContainer(container_id)
         if res:
-            messagebox.showinfo(msg)
+            messagebox.showinfo("Info", msg)
         else:
-            messagebox.showerror(msg)
+            messagebox.showerror("Error", msg)
         self.refresh()
 
     def refresh(self):
         for widget in self.container_frame.winfo_children():
             widget.destroy()
+        self.create_headers()
         self.load_containers()
 
     def go_back(self):

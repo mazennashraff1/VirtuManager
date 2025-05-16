@@ -142,11 +142,11 @@ class DockerImagePullPage:
                 return
             selected = self.suggestions_list.get(selection[0])
             if selected:
-                result_message = self.controller.pullDockerImage(selected)
-                if result_message.startswith("Image"):
-                    messagebox.showinfo("Success", result_message)
+                res, msg = self.controller.pullDockerImage(selected)
+                if res:
+                    messagebox.showinfo("Success", msg)
                 else:
-                    messagebox.showerror("Error", result_message)
+                    messagebox.showerror("Error", msg)
         except Exception as e:
             messagebox.showerror("Error", f"Unexpected error: {str(e)}")
 
