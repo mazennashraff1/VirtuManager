@@ -21,7 +21,7 @@ class SearchDockerImagePage:
             text_color="white",
             corner_radius=8,
             width=100,
-            height=35
+            height=35,
         ).pack(anchor="nw", pady=15, padx=20)
 
         # --- Main Section ---
@@ -32,13 +32,13 @@ class SearchDockerImagePage:
             self.main_frame,
             text="🔍 Search for a Docker Image",
             font=("Segoe UI", 22, "bold"),
-            text_color="white"
+            text_color="white",
         ).pack(anchor="w", pady=(0, 15))
 
         self.search_entry = ctk.CTkEntry(
             self.main_frame,
             placeholder_text="Enter image name (e.g., nginx)",
-            width=460
+            width=460,
         )
         self.search_entry.pack(anchor="w", pady=5)
 
@@ -50,10 +50,12 @@ class SearchDockerImagePage:
             hover_color="#0056b3",
             text_color="white",
             width=140,
-            font=ctk.CTkFont(size=12, weight="bold")
+            font=ctk.CTkFont(size=12, weight="bold"),
         ).pack(anchor="w", pady=12)
 
-        self.result_frame = ctk.CTkFrame(self.main_frame, fg_color="#2e2e2e", corner_radius=8)
+        self.result_frame = ctk.CTkFrame(
+            self.main_frame, fg_color="#2e2e2e", corner_radius=8
+        )
         self.result_frame.pack(fill="both", expand=True, pady=20)
 
     def perform_search(self):
@@ -68,7 +70,7 @@ class SearchDockerImagePage:
         res, images = self.controller.searchImage(query)
 
         if not res:
-            messagebox.showerror("Error", "Something went wrong while searching.")
+            messagebox.showerror("Error", images)
             return
 
         if len(images) == 0:
@@ -76,7 +78,7 @@ class SearchDockerImagePage:
                 self.result_frame,
                 text="⚠️ No images found.",
                 text_color="white",
-                font=ctk.CTkFont(size=14)
+                font=ctk.CTkFont(size=14),
             ).pack(pady=10)
             return
 
@@ -86,20 +88,17 @@ class SearchDockerImagePage:
             self.result_frame,
             text=f"🖼 Repository: {img['Repository']}",
             text_color="white",
-            font=("Segoe UI", 16, "bold")
+            font=("Segoe UI", 16, "bold"),
         ).pack(anchor="w", pady=8, padx=20)
 
         for label, icon in [
             (f"🔖 Tag: {img['Tag']}", 5),
             (f"🆔 Image ID: {img['ImageID']}", 5),
             (f"📅 Created: {img['Created']}", 5),
-            (f"📦 Size: {img['Size']}", 10)
+            (f"📦 Size: {img['Size']}", 10),
         ]:
             ctk.CTkLabel(
-                self.result_frame,
-                text=label,
-                text_color="white",
-                font=("Segoe UI", 13)
+                self.result_frame, text=label, text_color="white", font=("Segoe UI", 13)
             ).pack(anchor="w", pady=(icon, 0), padx=20)
 
         # Buttons
@@ -116,7 +115,7 @@ class SearchDockerImagePage:
             text_color="white",
             width=120,
             font=ctk.CTkFont(size=13, weight="bold"),
-            command=lambda: self.run_image(img['Repository'], img['Tag'])
+            command=lambda: self.run_image(img["Repository"], img["Tag"]),
         ).pack(side="left", padx=15)
 
         ctk.CTkButton(
@@ -127,16 +126,19 @@ class SearchDockerImagePage:
             text_color="white",
             width=120,
             font=ctk.CTkFont(size=13, weight="bold"),
-            command=lambda: self.delete_image(img["ImageID"])
+            command=lambda: self.delete_image(img["ImageID"]),
         ).pack(side="left", padx=15)
 
     def run_image(self, name, tag):
         from view.runImagePage import RunDockerImagePage
+
         self.window.after(100, self.window.destroy)
         RunDockerImagePage(self.root, {"Image": name, "Tag": tag})
 
     def delete_image(self, full_name):
-        confirm = messagebox.askyesno("Confirm Deletion", f"Are you sure you want to delete {full_name}?")
+        confirm = messagebox.askyesno(
+            "Confirm Deletion", f"Are you sure you want to delete {full_name}?"
+        )
         if not confirm:
             return
 
@@ -151,4 +153,5 @@ class SearchDockerImagePage:
     def go_back(self):
         self.window.destroy()
         from view.createDockerFile import CreateDockerfilePage
+
         CreateDockerfilePage(self.root)
