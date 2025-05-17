@@ -1,2 +1,1 @@
 Disk Path,Format,Size (GB)
-D:/test/test,vmdk,15
