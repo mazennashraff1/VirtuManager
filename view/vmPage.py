@@ -79,7 +79,7 @@ class CreateVirtualMachinePage:
         form_grid_frame.pack()
 
         self.disk_path = self.add_input_grid(form_grid_frame, 0, "💽 Disk Path:", self.browse_disk_path)
-        self.memory = self.add_input_grid(form_grid_frame, 1, "🧠 Memory (GB):")
+        self.memory = self.add_input_grid(form_grid_frame, 1, "🧠 Memory (MB):")
         self.cpus = self.add_input_grid(form_grid_frame, 2, "🧩 CPUs:")
         self.iso_path = self.add_input_grid(form_grid_frame, 3, "📀 ISO Path:", self.browse_iso_path)
 

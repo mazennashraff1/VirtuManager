@@ -56,6 +56,14 @@ class VirtualMachineController:
 
     def readVMs(self):
         VMs = []
+        pid_map = {}
+
+        if os.path.isfile("vms.pid"):
+            with open("vms.pid", "r") as f:
+                for line in f:
+                    parts = line.strip().split(",")
+                    if len(parts) == 2:
+                        pid_map[parts[0]] = parts[1]
         fileName = "./logs/allVM.txt"
         if os.path.isfile(fileName):
             with open(fileName, "r") as f:
@@ -70,6 +78,7 @@ class VirtualMachineController:
                                 "Disk Path": diskPath,
                                 "RAM (GB)": RAM,
                                 "CPU (Cores)": CPU,
+                                "PID": pid,
                             }
                         )
         return VMs

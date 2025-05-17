@@ -51,7 +51,7 @@ def create_virtual_machine(disk_path, memory, cpu_cores, iso):
         "-cdrom",
         iso,  # ISO file
         "-boot",
-        "menu=on",  # Boot menu
+        "order=d,menu=on",  # Boot menu
         "-display",
         "sdl",  # GUI window
     ]
@@ -60,8 +60,8 @@ def create_virtual_machine(disk_path, memory, cpu_cores, iso):
 
     try:
         vm_process = subprocess.Popen(cmd)
-        with open("vm.pid", "w") as f:
-            f.write(str(vm_process.pid))
+        with open("vms.pid", "a") as f:
+            f.write(f"{disk_path},{vm_process.pid}\n")
         print(f"VM started with PID {vm_process.pid}")
         return vm_process.pid
     except Exception as e:
@@ -70,15 +70,54 @@ def create_virtual_machine(disk_path, memory, cpu_cores, iso):
 
 def stop_virtual_machine(pid):
     try:
-        print(f"Stopping VM with PID {pid}...")
-        os.kill(int(pid), signal.SIGTERM)
-        print("VM stopped successfully.")
-    except ProcessLookupError:
-        print("No such process. VM may have already exited.")
-    except PermissionError:
-        print("Permission denied. Try running with elevated privileges.")
+        result = subprocess.run(
+            ["taskkill", "/PID", str(pid), "/F"],
+            capture_output=True,
+            text=True,
+            check=True
+        )
+        print(f"✅ VM process {pid} terminated.")
+    except subprocess.CalledProcessError as e:
+        if "not found" in e.stderr.lower() or "no running instance" in e.stderr.lower():
+            print(f"⚠️ VM process {pid} is already stopped or not found.")
+        else:
+            print(f"❌ Failed to stop VM {pid}:\n{e.stderr.strip()}")
+
+
+def stop_vm_by_disk_path(disk_path):
+    pid_to_kill = None
+
+    try:
+        with open("vms.pid", "r") as f:
+            lines = f.readlines()
+        for line in lines:
+            path, pid = line.strip().split(",")
+            if path == disk_path:
+                pid_to_kill = pid
+                break
+    except FileNotFoundError:
+        print("❌ vms.pid file not found.")
+        return
+
+    if not pid_to_kill:
+        print(f"⚠️ No running VM found for disk path: {disk_path}")
+        return
+
+    stop_virtual_machine(pid_to_kill)
+    remove_vm_pid_entry(disk_path)
+
+
+def remove_vm_pid_entry(disk_path):
+    try:
+        with open("vms.pid", "r") as f:
+            lines = f.readlines()
+        with open("vms.pid", "w") as f:
+            for line in lines:
+                if not line.startswith(disk_path):
+                    f.write(line)
+        print(f"🧹 Cleaned up PID entry for: {disk_path}")
     except Exception as e:
-        print(f"Error stopping VM: {e}")
+        print(f"❌ Failed to update vms.pid: {e}")
 
 
 if __name__ == "__main__":
