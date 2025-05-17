@@ -162,7 +162,7 @@ def search_local_images(query):
         if matches:
             return True, matches
         else:
-            return True, []
+            return False, "No Image with this Name Locally Create or Pull it"
     except subprocess.CalledProcessError as e:
         error_msg = e.stderr if e.stderr else str(e)
         return False, f"Error retrieving local Docker images: {error_msg}"

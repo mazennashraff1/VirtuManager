@@ -1,1 +1,2 @@
 ISO Path,Disk Path,RAM (GB),CPU (Cores)
+D:/test/test.qcow2,2,2,D:/test/alpine-standard-3.21.3-x86_64.iso,16984

@@ -1,4 +1,6 @@
+import re
 import os
+import socket
 import requests
 from model.Docker import (
     run_image,
@@ -79,6 +81,29 @@ class DockerController:
             images.append(image)
 
         return images
+
+    def _validateHostPort(self, port: int) -> tuple[bool, str]:
+        if not isinstance(port, int):
+            return False, "Host port must be an integer."
+
+        if port < 1 or port > 65535:
+            return False, "Host port must be between 1 and 65535."
+
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            if s.connect_ex(("localhost", port)) == 0:
+                return False, f"Host port {port} is already in use."
+
+        return True, "Host port is valid and available."
+
+    def _validateContPort(self, port: int) -> tuple[bool, str]:
+        if not isinstance(port, int):
+            return False, "Container port must be an integer."
+
+        if port < 1 or port > 65535:
+            return False, "Container port must be between 1 and 65535."
+
+        # Optional: Add custom logic to check if this is a standard port based on image
+        return True, "Container port is valid."
 
     def _saveLog(self, data):
         fileName = "logs/allDockerFiles.txt"
@@ -206,9 +231,42 @@ class DockerController:
         if not all([name, tag, dockerFile, buildDir]):
             return False, "All fields are required."
 
+        # Validate image name
+        valid_name = re.fullmatch(r"[a-z0-9._-]+", name)
+        if not valid_name or name[0] in ".-_" or name[-1] in ".-_":
+            return (
+                False,
+                "Invalid image name. Use only lowercase letters, numbers, '.', '-', '_' and do not start or end with separators.",
+            )
+
+        # Validate tag (optional, but can be added for stricter enforcement)
+        valid_tag = re.fullmatch(r"[a-zA-Z0-9_.-]+", tag)
+        if not valid_tag:
+            return False, "Invalid tag. Use only letters, numbers, '.', '-', or '_'"
+
+        # Check if image already exists locally
+        existing_images = self.getAllImages()
+        for img in existing_images:
+            if img["Repository"] == name and img["Tag"] == tag:
+                return False, f"Image '{name}:{tag}' already exists."
+
         dockerFileCheck = self._checkPath(dockerFile)
         if not dockerFileCheck:
             return False, "Please Provide a Valid Path of the DockerFile"
+
+        # Check if Dockerfile is a file and readable
+        if not os.path.isfile(dockerFile):
+            return False, "Dockerfile path is not a file."
+        try:
+            with open(dockerFile, "r") as f:
+                content = f.read()
+                if "FROM" not in content.upper():
+                    return (
+                        False,
+                        "Invalid Dockerfile. It must contain a FROM instruction.",
+                    )
+        except Exception as e:
+            return False, f"Cannot read Dockerfile: {str(e)}"
 
         buildDirCheck = self._checkPath(buildDir)
         if not buildDirCheck:
@@ -239,10 +297,52 @@ class DockerController:
         except Exception as e:
             raise RuntimeError(f"Failed to fetch images: {str(e)}")
 
-    def pullDockerImage(self, image: str) -> str:
-        return pull_image(image)
+    def pullDockerImage(self, image: str) -> tuple[bool, str]:
+        try:
+            # Default tag if not specified
+            if ":" in image:
+                img_name, img_tag = image.split(":")
+            else:
+                img_name = image
+                img_tag = "latest"
+
+            # Check if image already exists locally
+            res, images = self.searchImage(img_name)
+            if res:
+                for img in images:
+                    if img["Repository"] == img_name and img["Tag"] == img_tag:
+                        return False, f"Image '{image}' is already pulled."
+
+            # Pull the image
+            return pull_image(image)
+
+        except Exception as e:
+            return False, f"Error pulling image: {str(e)}"
 
     def runDockerImage(self, imgName, imgTag, contName, hostPort, contPort):
+        fullImageName = f"{imgName}:{imgTag}"
+
+        # Check if image exists locally
+        existing_images = self.getAllImages()
+        exist = False
+        for img in existing_images:
+            if img["Repository"] == imgName and img["Tag"] == imgTag:
+                exist = True
+
+        if not exist:
+            return (
+                False,
+                f"Image '{fullImageName}' not found locally. Please pull or build the image first.",
+            )
+
+        validHost, msgHost = self._validateHostPort(int(hostPort))
+        if not validHost:
+            return False, msgHost
+
+        validCont, msgCont = self._validateContPort(int(contPort))
+        if not validCont:
+            return False, msgCont
+
         imgName = f"{imgName}:{imgTag}"
         return run_image(imgName, contName, hostPort, contPort)
 
@@ -256,12 +356,18 @@ class DockerController:
         return delete_image(id)
 
     def searchImage(self, name):
+        valid_name = re.fullmatch(r"[a-z0-9._-]+", name)
+        if not valid_name or name[0] in ".-_" or name[-1] in ".-_":
+            return (
+                False,
+                "Invalid image name. Use only lowercase letters, numbers, '.', '-', '_' and do not start or end with separators.",
+            )
         res, data = search_local_images(name)
         if res:
             images = self._parseDockerImages(data[0])
             return res, images
         else:
-            return res, []
+            return res, data
 
     def deleteContainer(self, id):
         return delete_container(id)

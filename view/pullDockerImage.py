@@ -16,7 +16,7 @@ class DockerImagePullPage:
 
         self.window.protocol("WM_DELETE_WINDOW", self.go_back)
 
-         # --- Back Button Only ---
+        # --- Back Button Only ---
         ctk.CTkButton(
             self.window,
             text="← Back",
@@ -26,7 +26,7 @@ class DockerImagePullPage:
             text_color="white",
             corner_radius=8,
             width=100,
-            height=35
+            height=35,
         ).pack(anchor="nw", pady=15, padx=20)
 
         # --- Main Frame ---
@@ -42,9 +42,7 @@ class DockerImagePullPage:
 
         self.search_var = tk.StringVar()
         self.search_entry = ctk.CTkEntry(
-            self.main_frame,
-            textvariable=self.search_var,
-            width=500
+            self.main_frame, textvariable=self.search_var, width=500
         )
         self.search_entry.pack(anchor="w", pady=6)
         self.search_entry.bind("<KeyRelease>", self.search_images)
@@ -53,8 +51,8 @@ class DockerImagePullPage:
             self.main_frame,
             height=8,
             width=75,
-            bg="#1e1e1e",                # darker background
-            fg="white",                  # white text
+            bg="#1e1e1e",  # darker background
+            fg="white",  # white text
             font=("Segoe UI", 11),
             selectbackground="#5c1e1e",  # red hover-like selection
             selectforeground="white",
@@ -62,7 +60,7 @@ class DockerImagePullPage:
             highlightbackground="#444",  # border color
             relief="flat",
             bd=0,
-            activestyle="dotbox"         # optional: visual cue for active row
+            activestyle="dotbox",  # optional: visual cue for active row
         )
 
         self.suggestions_list.pack(anchor="w", pady=(6, 10))
@@ -72,7 +70,7 @@ class DockerImagePullPage:
             self.main_frame,
             text="📝 Image Info",
             text_color="white",
-            font=ctk.CTkFont(size=16, weight="bold")
+            font=ctk.CTkFont(size=16, weight="bold"),
         ).pack(anchor="w", pady=(10, 5))
 
         self.description_text = ctk.CTkTextbox(
@@ -84,7 +82,7 @@ class DockerImagePullPage:
             text_color="white",
             fg_color="#2c2c2c",
             border_color="#444",
-            border_width=2
+            border_width=2,
         )
         self.description_text.pack(anchor="w", pady=8)
         self.description_text.configure(state="disabled")
@@ -102,10 +100,9 @@ class DockerImagePullPage:
             width=220,
             height=42,
             font=ctk.CTkFont(size=14, weight="bold"),
-            corner_radius=8
+            corner_radius=8,
         )
         self.pull_button.pack()
-
 
         # Progress bar setup (initially hidden)
         self.progress_bar = ctk.CTkProgressBar(self.main_frame, width=500)
@@ -167,11 +164,24 @@ class DockerImagePullPage:
 
     def pull_image(self):
         try:
+            # Check if search box is empty
+            if not self.search_var.get().strip():
+                messagebox.showerror("Missing Input", "Please Search for Image to Pull")
+                return
+
+            # Check if user selected an image from the list
             selection = self.suggestions_list.curselection()
             if not selection:
+                messagebox.showerror(
+                    "Missing Selection", "Please Search for Image to Pull"
+                )
                 return
+
             selected = self.suggestions_list.get(selection[0])
             if not selected:
+                messagebox.showerror(
+                    "Missing Selection", "Please Search for Image to Pull"
+                )
                 return
 
             self.progress_bar.pack(pady=(0, 10))
@@ -182,7 +192,9 @@ class DockerImagePullPage:
                 while progress < 0.95:
                     progress += 0.01
                     try:
-                        self.window.after(0, lambda p=progress: self.progress_bar.set(p))
+                        self.window.after(
+                            0, lambda p=progress: self.progress_bar.set(p)
+                        )
                         time.sleep(0.05)
                     except:
                         break
@@ -203,9 +215,8 @@ class DockerImagePullPage:
         except Exception as e:
             messagebox.showerror("Error", f"Unexpected error: {str(e)}")
 
-    
-
     def go_back(self):
         self.window.destroy()
         from view.createDockerFile import CreateDockerfilePage
+
         CreateDockerfilePage(self.root)

@@ -1,1 +1,2 @@
 Disk Path,Format,Size (GB)
+D:/test/temp,qcow2,10
