@@ -9,7 +9,7 @@ class ListVirtualDisksPage:
         self.controller = VirtualDiskController()
         self.window = ctk.CTkToplevel(fg_color="#1e1e1e")
         self.window.title("List All Virtual Disks")
-        self.window.geometry("820x520")
+        self.window.geometry("1000x600")
         self.window.protocol("WM_DELETE_WINDOW", self.go_back)
 
         # --- Back Button ---

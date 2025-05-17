@@ -13,8 +13,10 @@ def list_all_containers():
         result = subprocess.run(cmd, capture_output=True, text=True, check=True)
         return True, result.stdout.strip()
     except subprocess.CalledProcessError as e:
-        error_msg = e.stderr if e.stderr else str(e)
-        return False, f"Error listing all containers: {error_msg}"
+        return (
+            False,
+            "Unable to list containers. Make sure Docker is running and you have the necessary permissions.",
+        )
 
 
 def list_all_images():
@@ -27,9 +29,11 @@ def list_all_images():
     try:
         result = subprocess.run(cmd, capture_output=True, text=True, check=True)
         return True, result.stdout.strip()
-    except subprocess.CalledProcessError as e:
-        error_msg = e.stderr if e.stderr else str(e)
-        return False, f"Error listing all images: {error_msg}"
+    except subprocess.CalledProcessError:
+        return (
+            False,
+            "Unable to list images. Ensure Docker is running and accessible from your terminal.",
+        )
 
 
 def run_image(image_name, container_name, host_port, container_port):
@@ -50,8 +54,10 @@ def run_image(image_name, container_name, host_port, container_port):
             f"Container '{container_name}' started successfully.\nID: {result.stdout.strip()}",
         )
     except subprocess.CalledProcessError as e:
-        error_msg = e.stderr.strip() if e.stderr else str(e)
-        return False, f"Failed to run container:\n{error_msg}"
+        return (
+            False,
+            f"Failed to run container.\nDetails: {e.stderr.strip() if e.stderr else str(e)}\nTip: Check if the image exists locally or if the ports are already in use.",
+        )
 
 
 def stop_container(container_id):
@@ -63,8 +69,10 @@ def stop_container(container_id):
             f"Container '{container_id}' stopped successfully.\n{result.stdout.strip()}",
         )
     except subprocess.CalledProcessError as e:
-        error_msg = e.stderr.strip() if e.stderr else str(e)
-        return False, f"Failed to stop container '{container_id}': {error_msg}"
+        return (
+            False,
+            f"Failed to stop container '{container_id}'.\nDetails: {e.stderr.strip()}\nMake sure the container is running.",
+        )
 
 
 def start_container(container_id_or_name):
@@ -76,8 +84,10 @@ def start_container(container_id_or_name):
             f"Container '{container_id_or_name}' started successfully.\n{result.stdout.strip()}",
         )
     except subprocess.CalledProcessError as e:
-        error_msg = e.stderr.strip() if e.stderr else str(e)
-        return False, f"Failed to start container:\n{error_msg}"
+        return (
+            False,
+            f"Failed to start container '{container_id_or_name}'.\nDetails: {e.stderr.strip()}\nCheck if the container exists or is already running.",
+        )
 
 
 def delete_image(image_name_or_id):
@@ -89,16 +99,14 @@ def delete_image(image_name_or_id):
             f"Image '{image_name_or_id}' deleted successfully.\n{result.stdout.strip()}",
         )
     except subprocess.CalledProcessError as e:
-        error_msg = e.stderr.strip() if e.stderr else str(e)
-        return False, f"Failed to delete image:\n{error_msg}"
+        return (
+            False,
+            f"Could not delete image '{image_name_or_id}'.\nDetails: {e.stderr.strip()}\nTip: Ensure the image is not used by any containers.",
+        )
 
 
 def delete_container(container_name_or_id):
-    cmd = [
-        "docker",
-        "rm",
-        container_name_or_id,
-    ]
+    cmd = ["docker", "rm", container_name_or_id]
     try:
         result = subprocess.run(cmd, capture_output=True, text=True, check=True)
         return (
@@ -106,46 +114,46 @@ def delete_container(container_name_or_id):
             f"Container '{container_name_or_id}' deleted successfully.\n{result.stdout.strip()}",
         )
     except subprocess.CalledProcessError as e:
-        error_msg = e.stderr.strip() if e.stderr else str(e)
-        return False, f"Failed to delete container:\n{error_msg}"
+        return (
+            False,
+            f"Could not delete container '{container_name_or_id}'.\nDetails: {e.stderr.strip()}\nTip: Stop the container before deleting it.",
+        )
 
 
 def pull_image(image_name: str):
-    """
-    Pulls a Docker image from DockerHub.
-
-    Args:
-        image_name (str): The name of the image (e.g. 'nginx', 'python:3.11-alpine')
-
-    Returns:
-        (bool, str): Tuple where bool indicates success, and str is a message.
-    """
     cmd = ["docker", "pull", image_name]
     try:
         subprocess.run(cmd, capture_output=True, text=True, check=True)
         return True, f"Image '{image_name}' pulled successfully."
     except subprocess.CalledProcessError as e:
-        error_msg = e.stderr if e.stderr else str(e)
-        return False, f"Error pulling image: {error_msg}"
+        return (
+            False,
+            f"Failed to pull image '{image_name}'.\nDetails: {e.stderr.strip() if e.stderr else str(e)}\nEnsure the image name is correct and you have internet access.",
+        )
 
 
 def create_dockerfile(content, path):
     try:
         with open(path, "w") as f:
             f.write(content)
-        return True, f"Dockerfile created at {path}"
+        return True, f"Dockerfile saved successfully at: {path}"
     except Exception as e:
-        return False, f"Failed to save Dockerfile: {str(e)}"
+        return (
+            False,
+            f"Error saving Dockerfile: {str(e)}\nCheck if the path is correct and you have write permissions.",
+        )
 
 
 def build_docker_image(docker_path, create_path, tag):
     cmd = ["docker", "build", "-f", docker_path, "-t", tag, create_path]
     try:
-        subprocess.run(cmd, check=True)
+        subprocess.run(cmd, capture_output=True, text=True, check=True)
         return True, f"Docker image '{tag}' built successfully."
     except subprocess.CalledProcessError as e:
-        error_msg = e.stderr if e.stderr else str(e)
-        return False, f"Error building Docker image: {error_msg}"
+        return (
+            False,
+            f"Failed to build image '{tag}'.\nDetails: {e.stderr.strip() if e.stderr else str(e)}\nEnsure the Dockerfile is valid and the build context path is correct.",
+        )
 
 
 def search_local_images(query):
@@ -162,7 +170,12 @@ def search_local_images(query):
         if matches:
             return True, matches
         else:
-            return False, "No Image with this Name Locally Create or Pull it"
+            return (
+                False,
+                "No image found matching your query.\nTry pulling it first using the image name.",
+            )
     except subprocess.CalledProcessError as e:
-        error_msg = e.stderr if e.stderr else str(e)
-        return False, f"Error retrieving local Docker images: {error_msg}"
+        return (
+            False,
+            f"Could not search local images.\nDetails: {e.stderr.strip() if e.stderr else str(e)}\nIs Docker running?",
+        )

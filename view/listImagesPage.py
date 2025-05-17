@@ -10,7 +10,7 @@ class ListDockerImagesPage:
         self.root = root
         self.window = ctk.CTkToplevel(fg_color="#1e1e1e")
         self.window.title("List Docker Images")
-        self.window.geometry("700x400")
+        self.window.geometry("1000x600")
 
         # Back Button
         ctk.CTkButton(

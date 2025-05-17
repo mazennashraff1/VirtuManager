@@ -67,20 +67,21 @@ class VirtualMachineController:
         fileName = "./logs/allVM.txt"
         if os.path.isfile(fileName):
             with open(fileName, "r") as f:
-                lines = f.readlines()[1:]
-                for line in lines:
-                    parts = line.strip().split(",")
-                    if len(parts) == 5:
-                        diskPath, RAM, CPU, isoPath, pid = parts
-                        VMs.append(
-                            {
-                                "ISO File": isoPath,
-                                "Disk Path": diskPath,
-                                "RAM (GB)": RAM,
-                                "CPU (Cores)": CPU,
-                                "PID": pid,
-                            }
-                        )
+                lines = f.readlines()
+                if len(lines) > 1:
+                    for line in lines[1:]:
+                        parts = line.strip().split(",")
+                        if len(parts) == 5:
+                            diskPath, RAM, CPU, isoPath, pid = parts
+                            VMs.append(
+                                {
+                                    "ISO File": isoPath,
+                                    "Disk Path": diskPath,
+                                    "RAM (GB)": RAM,
+                                    "CPU (Cores)": CPU,
+                                    "PID": pid,
+                                }
+                            )
         return VMs
 
     def callVM(self, diskPath, requiredRAM, requiredCPU, isoPath):

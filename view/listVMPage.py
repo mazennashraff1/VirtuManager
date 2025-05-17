@@ -9,7 +9,7 @@ class ListVirtualMachinesPage:
         self.controller = VirtualMachineController()
         self.window = ctk.CTkToplevel(fg_color="#1e1e1e")
         self.window.title("List Virtual Machines")
-        self.window.geometry("860x540")
+        self.window.geometry("1000x600")
         self.window.protocol("WM_DELETE_WINDOW", self.go_back)
 
         # --- Back Button ---

@@ -77,16 +77,17 @@ class VirtualDiskController:
         fileName = "logs/allVD.txt"
         if os.path.isfile(fileName):
             with open(fileName, "r") as f:
-                lines = f.readlines()[1:]
-                for line in lines:
-                    diskPath, diskFormat, diskSize = line.strip().split(",")
-                    VDs.append(
-                        {
-                            "Disk Path": diskPath,
-                            "Format": diskFormat,
-                            "Size (GB)": diskSize,
-                        }
-                    )
+                lines = f.readlines()
+                if len(lines) > 1:
+                    for line in lines[1:]:
+                        diskPath, diskFormat, diskSize = line.strip().split(",")
+                        VDs.append(
+                            {
+                                "Disk Path": diskPath,
+                                "Format": diskFormat,
+                                "Size (GB)": diskSize,
+                            }
+                        )
         return VDs
 
     def callVD(self, diskName, diskPath, diskFormat, diskSize):
