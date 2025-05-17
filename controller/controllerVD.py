@@ -90,6 +90,42 @@ class VirtualDiskController:
                         )
         return VDs
 
+    def updateVD(self, oldDiskName, newDiskName, diskPath, diskFormat, diskSize):
+        formats = ["qcow2", "vmdk", "vdi", "raw", "vhd"]
+        if newDiskName != "" and diskFormat != "" and diskSize != "" and diskPath != "":
+            if diskFormat not in formats:
+                return f"Virtual disk Format selected '{diskFormat}'. Expected one of: {', '.join(formats)}."
+
+            # Step 1: Delete the old disk file
+            old_file_path = os.path.join(diskPath, oldDiskName)
+            if not os.path.splitext(old_file_path)[1]:
+                # If old file has no extension, assume any format
+                for ext in formats:
+                    possible_path = f"{old_file_path}.{ext}"
+                    if os.path.exists(possible_path):
+                        os.remove(possible_path)
+                        break
+            elif os.path.exists(old_file_path):
+                os.remove(old_file_path)
+
+            # Step 2: Remove the old entry from logs
+            log_file = "logs/allVD.txt"
+            if os.path.exists(log_file):
+                with open(log_file, "r") as f:
+                    lines = f.readlines()
+
+                with open(log_file, "w") as f:
+                    f.write(lines[0])  # keep header
+                    for line in lines[1:]:
+                        if oldDiskName not in line:
+                            f.write(line)
+
+            # Step 3: Create new disk using callVD
+            result = self.callVD(newDiskName, diskPath, diskFormat, diskSize)
+            return f"Disk updated. {result}"
+        else:
+            return "Please Fill out all the information"
+
     def callVD(self, diskName, diskPath, diskFormat, diskSize):
         formats = ["qcow2", "vmdk", "vdi", "raw", "vhd"]
         if diskName != "" and diskFormat != "" and diskSize != "" and diskPath != "":
@@ -113,3 +149,37 @@ class VirtualDiskController:
                 return pathMessage
         else:
             return "Please Fill out all the information"
+
+    def deleteVD(self, diskName, diskPath):
+        formats = ["qcow2", "vmdk", "vdi", "raw", "vhd"]
+        deleted = False
+        
+        # Attempt to delete the file with one of the possible extensions
+        for ext in formats:
+            file_path = os.path.join(diskPath, f"{diskName}.{ext}")
+            if os.path.exists(file_path):
+                try:
+                    os.remove(file_path)
+                    deleted = True
+                    break
+                except Exception as e:
+                    return f"Error deleting virtual disk file: {str(e)}"
+                
+        if not deleted:
+            return f"No virtual disk file found for '{diskName}' in '{diskPath}'."
+        
+        # Remove the entry from the log file
+        log_file = "logs/allVD.txt"
+        if os.path.exists(log_file):
+            try:
+                with open(log_file, "r") as f:
+                    lines = f.readlines()
+                with open(log_file, "w") as f:
+                    f.write(lines[0])  # Write header
+                    for line in lines[1:]:
+                        if diskName not in line:
+                            f.write(line)
+            except Exception as e:
+                return f"Disk deleted, but error updating log file: {str(e)}"
+            
+        return f"Virtual disk '{diskName}' deleted successfully from '{diskPath}'."
